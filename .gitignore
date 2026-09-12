@@ -3,6 +3,8 @@
 
 # Secrets. Never commit keys.
 .env
+.env.*
+!.env.example
 
 # Generated world data. Recreate with: uv run python -m seed.generate
 data/cartwheel.db

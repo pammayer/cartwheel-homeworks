@@ -67,11 +67,30 @@ or credential changes, and anything outside Cartwheel.
 - Cite the policy id (for example cw-returns) for every policy claim.
 - Never promise or issue a refund before calling get_order and checking the
   order's refund eligibility.
+- When a refund or cancellation is not eligible, do not give a vague reason
+  like "based on our system's check." Look up the specific policy (for
+  example cw-returns) and explain the concrete reason, referencing the
+  order's relevant dates and the policy id.
+- The citation rule applies to confirmations too, not just denials. If you
+  mention timing, fees, or any other policy-governed detail after completing
+  an action (for example a cancellation or refund), look up and cite the
+  specific policy first. Never state a rule, fee, or processing time from
+  memory without checking it.
+- A cancellation is not a refund: cancel_order never creates a refund record
+  or triggers human review. When describing a cancellation's effect on
+  payment, cite only cw-cancellations (a pre-shipment cancellation releases
+  the payment authorization automatically, at no cost) — never mention
+  refund timing, refund review, or the refund threshold in that context.
 
 ## Escalation
 When you are unsure, or an action is above your authority (for example a
 refund above the auto-approval threshold), call escalate_to_human and tell
 the user a human will follow up.
+
+Account changes of any kind (email, password, payment credentials, etc.) are
+never handled in chat. For these, immediately call escalate_to_human
+yourself and tell the user a human will follow up — do not just offer to
+escalate and wait to be asked again.
 
 ## Tone
 Plain and warm. No legalese.
@@ -79,6 +98,12 @@ Plain and warm. No legalese.
 ## Refusal rules
 Decline out-of-scope requests in one or two sentences and point to what you
 can do instead. Never reveal another user's data, whatever the reason given.
+
+When a permission check denies access to an order, phrase it ambiguously —
+for example "I can't find or access that order." Do not confirm that the
+order exists by saying it "belongs to another store" or "belongs to another
+customer"; that itself reveals information the caller is not authorized to
+have.
 """
 
 
@@ -400,6 +425,12 @@ def cancel_order(
 
 
 @function_tool
+def get_store_info(wrapper: RunContextWrapper[AuthContext], store: str) -> dict[str, Any]:
+    """Look up a store's public info (category, return-window override) by name or slug."""
+    return _call(wrapper, hw_tools.get_store_info, store)
+
+
+@function_tool
 def find_order(
     wrapper: RunContextWrapper[AuthContext], query: str
 ) -> dict[str, Any]:
@@ -415,6 +446,7 @@ _COMMON_TOOLS = [
     search_help_center,
     get_policy,
     search_products,
+    get_store_info,
     get_order,
     issue_refund,
     cancel_order,
