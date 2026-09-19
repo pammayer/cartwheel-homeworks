@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -51,6 +52,10 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 STATE_DIR = HERE / "state"
 UI_DIR = HERE / "ui"
+# Read-only: the HW3 scenario definitions (tuple + expected outcome), joined
+# client-side onto traces by scenario_id. Not part of the annotation state,
+# so it is served outside API_FILES and never accepts POST.
+SCENARIOS_PATH = HERE.parent / "scenarios" / "support_scenarios.jsonl"
 
 # API path -> the state file that backs it. GET reads the file, POST overwrites
 # it. Keeping this a plain table makes the whole contract inspectable and keeps
@@ -84,16 +89,21 @@ def _read_json(path: Path, default: Any) -> Any:
     if not path.exists():
         return default
     try:
-        return json.loads(path.read_text())
-    except (json.JSONDecodeError, OSError):
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return default
 
 
 def _write_json(path: Path, data: Any) -> None:
-    """Write ``data`` to ``path`` atomically (write temp, then replace)."""
+    """Write ``data`` to ``path`` atomically (write temp, then replace).
+
+    Explicit UTF-8: on Windows, str.write_text()/read_text() default to the
+    system codepage (cp1252), not UTF-8, which corrupts or crashes on real
+    non-ASCII trace content (this project's traces legitimately contain it).
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(data, indent=2))
+    tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
     tmp.replace(path)
 
 
@@ -165,6 +175,10 @@ class ReviewHandler(BaseHTTPRequestHandler):
             self._send_json(data)
             return
 
+        if path == "/api/scenarios":
+            self._send_json(_read_scenarios())
+            return
+
         self._send_json({"error": f"unknown path: {path}"}, status=404)
 
     def do_POST(self) -> None:  # noqa: N802
@@ -197,6 +211,53 @@ class ReviewHandler(BaseHTTPRequestHandler):
         if synced:
             result["langfuse_scores_written"] = synced
         self._send_json(result)
+
+
+def _read_scenarios() -> dict[str, Any]:
+    """Return HW3 scenario definitions keyed by id, for a client-side join
+    onto traces by scenario_id (tuple, expected outcome, expected reason)."""
+    if not SCENARIOS_PATH.exists():
+        return {}
+    out: dict[str, Any] = {}
+    for line in SCENARIOS_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(record, dict) and record.get("id"):
+            out[record["id"]] = record
+    _attach_session_info(out)
+    return out
+
+
+def _attach_session_info(scenarios: dict[str, Any]) -> None:
+    """Add the caller's session identity (user id, role, store id and name),
+    which is what the agent's system prompt is given, so a reviewer can
+    check tool arguments against it. Read-only; skipped if the DB is absent."""
+    db_path = HERE.parent / "data" / "cartwheel.db"
+    if not db_path.exists():
+        return
+    try:
+        conn = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
+        rows = conn.execute(
+            "SELECT u.id, u.name, u.role, u.store_id, s.name "
+            "FROM users u LEFT JOIN stores s ON s.id = u.store_id"
+        ).fetchall()
+        conn.close()
+    except sqlite3.Error:
+        return
+    by_user = {r[0]: r for r in rows}
+    for record in scenarios.values():
+        user_id = (record.get("tuple") or {}).get("user_id")
+        row = by_user.get(user_id)
+        if row:
+            record["session"] = {
+                "user_id": row[0], "user_name": row[1], "role": row[2],
+                "store_id": row[3], "store_name": row[4],
+            }
 
 
 def _count(data: Any) -> int:
@@ -333,7 +394,18 @@ def main() -> None:
         default=4.0,
         help="seconds between replayed annotations (default 4)",
     )
+    parser.add_argument(
+        "--ui-dir",
+        metavar="PATH",
+        help="serve the review app from this directory instead of ui/ "
+        "(e.g. review_app), while keeping the same state/ and API routes",
+    )
     args = parser.parse_args()
+
+    if args.ui_dir:
+        global UI_DIR
+        ui_dir = Path(args.ui_dir)
+        UI_DIR = ui_dir if ui_dir.is_absolute() else HERE / ui_dir
 
     STATE_DIR.mkdir(parents=True, exist_ok=True)
 

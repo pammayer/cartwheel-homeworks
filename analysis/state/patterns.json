@@ -1,1 +1,204 @@
-{"modes": []}
+{
+  "modes": [
+    {
+      "name": "verbose_reply",
+      "definition": "The reply contains content the request did not need: data recaps, repeated sentences, a recap turn before the needed question, or closing filler.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "07c842c26cd8a0bf03ff6f985d5fc336",
+        "b8ab0b98d5e7ac225cf2872c6d7ecbc4",
+        "88adb69fd1cb6a0a0dd5436f8af71cd1"
+      ],
+      "close_negative_trace_ids": [
+        "6c4abe2bd10f9fb3eacc461380513041",
+        "ebe170e7f88de5a6bc34d5561317c7eb",
+        "b536da88a7c1693b664a64533c0e8ad9"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789828675902-oqfyo",
+        "ann-1789828746823-hzli1",
+        "ann-1789829229264-k66f6",
+        "ann-1789831096525-nr0o3"
+      ],
+      "boundary": "Extra tool calls belong to redundant_tool_call; markup belongs to formatting_noise.",
+      "evaluator_type": "llm_judge",
+      "requirement_source": "RESP-5 (loose); new concision requirement needed"
+    },
+    {
+      "name": "redundant_tool_call",
+      "definition": "A tool call whose answer the agent already has, or that the request did not need.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "8fd3d03ef74e73e242d5c127139cd4e6",
+        "abed00ec5700865b093b54a799f3aec7",
+        "bea2297fc5df0ded189eea9019548e5f"
+      ],
+      "close_negative_trace_ids": [
+        "07c842c26cd8a0bf03ff6f985d5fc336",
+        "02bc53a4276fc89cb9f3f6cd56ce040f",
+        "cdebb350350c00313150815047bb7766"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789783952875-80ive",
+        "ann-1789784162863-0rvuq",
+        "ann-1789828380867-4fjed",
+        "ann-1789828440796-i3k5t",
+        "ann-1789829282272-ch57m"
+      ],
+      "boundary": "A call that errors belongs to rejected_tool_argument.",
+      "evaluator_type": "code_check_plus_llm_judge",
+      "requirement_source": "none; new requirement needed"
+    },
+    {
+      "name": "internal_policy_id_shown",
+      "definition": "The reply shows an internal policy identifier (for example cw-refunds) to the user.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "36ed333695bbd05e703a542b258ac0d0",
+        "abed00ec5700865b093b54a799f3aec7",
+        "b8ab0b98d5e7ac225cf2872c6d7ecbc4"
+      ],
+      "close_negative_trace_ids": [
+        "303aa115ab04e758380a5f7c81b32f98",
+        "db47a50902a8c12df9fa69e55230fdf1"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789784040012-a0pen",
+        "ann-1789828085995-8o4qh",
+        "ann-1789829143311-07d8g"
+      ],
+      "boundary": "Naming the policy by its plain-language title is the wanted form and is not this mode.",
+      "evaluator_type": "code_check",
+      "requirement_source": "revised RESP-1 plus new RESP-6 (plain-language citations)"
+    },
+    {
+      "name": "formatting_noise",
+      "definition": "The reply uses double asterisks, pipe tables, emoji, or an inconsistent label/date layout.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "07c842c26cd8a0bf03ff6f985d5fc336",
+        "6859196e302f509f4a87318c074c90fd",
+        "2622fa8de6e0ac7c45a215fc5049bed0"
+      ],
+      "close_negative_trace_ids": [
+        "6c4abe2bd10f9fb3eacc461380513041",
+        "131bf25c233cbd43087604a174e88150",
+        "b536da88a7c1693b664a64533c0e8ad9"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789828675902-oqfyo",
+        "ann-1789831887320-s5rjr",
+        "ann-1789834101930-zkq3t"
+      ],
+      "boundary": "Apology or gushing tone belongs to tone_off; emoji count here only as markup.",
+      "evaluator_type": "code_check_plus_llm_judge",
+      "requirement_source": "none; new requirement needed"
+    },
+    {
+      "name": "tone_off",
+      "definition": "The reply apologizes, gushes (for example \"Great news!\"), or claims feelings.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "b8ab0b98d5e7ac225cf2872c6d7ecbc4",
+        "c4de09d9569488e337f32051f0bfff13",
+        "131bf25c233cbd43087604a174e88150"
+      ],
+      "close_negative_trace_ids": [
+        "6c4abe2bd10f9fb3eacc461380513041",
+        "ebe170e7f88de5a6bc34d5561317c7eb",
+        "e156d45073ec9314b65bf150edd789d9"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789829229264-k66f6",
+        "ann-1789830571369-p0ga8",
+        "ann-1789833388828-mw2p9"
+      ],
+      "boundary": "Length belongs to verbose_reply.",
+      "evaluator_type": "llm_judge",
+      "requirement_source": "RESP-5 (loose); revision may be needed"
+    },
+    {
+      "name": "rejected_tool_argument",
+      "definition": "An agent-supplied tool argument is in a form the tool rejects (not_found or invalid_argument), for example a numeric store id where a store name is required.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "4b007c286fc3e175cf3b6ccfb3f020f2",
+        "4cd5ee3add28bc2e303171a97a9e245c",
+        "4171307f07ef4dbc0b27d5a6a37ad8e0"
+      ],
+      "close_negative_trace_ids": [
+        "c4fba194fcdeb9ae00f06e766dcebdaa",
+        "8fd3d03ef74e73e242d5c127139cd4e6",
+        "cbcf765326b9bc88a2c1b657cdeaf746"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789828322367-i8ohv",
+        "ann-1789828478341-lc9ed",
+        "ann-1789830612926-ea858"
+      ],
+      "boundary": "A permission denial is expected behavior, not this mode.",
+      "evaluator_type": "code_check",
+      "requirement_source": "none; new requirement needed"
+    },
+    {
+      "name": "missing_data_not_flagged",
+      "definition": "The record has missing or inconsistent data and the reply does not say so.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "8e2ead2415294386a029535c6fb4a7b9",
+        "099a5c2b895e99078abf81b489e78438",
+        "88adb69fd1cb6a0a0dd5436f8af71cd1"
+      ],
+      "close_negative_trace_ids": [
+        "996433c65f56d76a1a3c03795732aafc",
+        "ae6d7f2bc75d62245ca306aeb4af8d76",
+        "1cc34674d7fe5f024dc1426df37b8e13",
+        "c4de09d9569488e337f32051f0bfff13"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789831096525-nr0o3",
+        "ann-1789833245960-6y09s"
+      ],
+      "boundary": "How the agent explains things belongs to other modes.",
+      "evaluator_type": "llm_judge",
+      "requirement_source": "RESP-3",
+      "unconfirmed_positive_trace_ids": [
+        "099a5c2b895e99078abf81b489e78438",
+        "88adb69fd1cb6a0a0dd5436f8af71cd1"
+      ]
+    },
+    {
+      "name": "persona_not_clarified",
+      "definition": "The caller sounds like they are acting in a different capacity than their session role, and the agent neither asks nor says which capacity it is serving.",
+      "status": "draft",
+      "count": 3,
+      "example_trace_ids": [
+        "d71b7a03b110c9d5e1ab2c1145fc9d61",
+        "8723cb477733a54ebb0ea931385688a7",
+        "b4e408c135ea3700110d3121fd6e5154"
+      ],
+      "close_negative_trace_ids": [
+        "b536da88a7c1693b664a64533c0e8ad9",
+        "0677401a9300cc79d9b5069651f70426",
+        "e156d45073ec9314b65bf150edd789d9"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789831170066-v0qpk"
+      ],
+      "boundary": "A refusal that leaks information belongs to RESP-4.",
+      "evaluator_type": "llm_judge",
+      "requirement_source": "SPEC Section 3 (roles); new requirement needed",
+      "unconfirmed_positive_trace_ids": [
+        "8723cb477733a54ebb0ea931385688a7",
+        "b4e408c135ea3700110d3121fd6e5154"
+      ]
+    }
+  ]
+}

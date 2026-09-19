@@ -1,0 +1,248 @@
+{
+  "source": "C:\\Users\\pamma\\OneDrive\\Desktop\\git\\cartwheel-homeworks\\traces\\support_traces.json",
+  "k": 60,
+  "strategy": "hw4-part-b-batch-1-and-2 (15 uniform + 15 cluster-rep + 30 stratified by role)",
+  "selected_at": "2026-09-19T02:31:14.075413+00:00",
+  "picks": [
+    {
+      "trace_id": "633afacff8006038721468238086d8b5",
+      "reason": "cluster 0 representative"
+    },
+    {
+      "trace_id": "36ed333695bbd05e703a542b258ac0d0",
+      "reason": "cluster 1 representative"
+    },
+    {
+      "trace_id": "146f4874338007c5615357b71ed01113",
+      "reason": "cluster 2 representative"
+    },
+    {
+      "trace_id": "4b007c286fc3e175cf3b6ccfb3f020f2",
+      "reason": "cluster 3 representative"
+    },
+    {
+      "trace_id": "8fd3d03ef74e73e242d5c127139cd4e6",
+      "reason": "cluster 4 representative"
+    },
+    {
+      "trace_id": "abed00ec5700865b093b54a799f3aec7",
+      "reason": "cluster 5 representative"
+    },
+    {
+      "trace_id": "4cd5ee3add28bc2e303171a97a9e245c",
+      "reason": "cluster 6 representative"
+    },
+    {
+      "trace_id": "88ccacd8e7ee7961cf16971bdf24c530",
+      "reason": "cluster 0 representative"
+    },
+    {
+      "trace_id": "07c842c26cd8a0bf03ff6f985d5fc336",
+      "reason": "cluster 1 representative"
+    },
+    {
+      "trace_id": "00aad373bbaa530a83a7a256dc18c9e4",
+      "reason": "cluster 2 representative"
+    },
+    {
+      "trace_id": "b8ab0b98d5e7ac225cf2872c6d7ecbc4",
+      "reason": "cluster 3 representative"
+    },
+    {
+      "trace_id": "bea2297fc5df0ded189eea9019548e5f",
+      "reason": "cluster 4 representative"
+    },
+    {
+      "trace_id": "5a69a73ac13a285013272a967c633c30",
+      "reason": "cluster 5 representative"
+    },
+    {
+      "trace_id": "c4fba194fcdeb9ae00f06e766dcebdaa",
+      "reason": "cluster 6 representative"
+    },
+    {
+      "trace_id": "564129d5827c5fb8758135be58b8a484",
+      "reason": "cluster 0 representative"
+    },
+    {
+      "trace_id": "e18e8f1c4d529287c1cb12c25585ec7b",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "ebe170e7f88de5a6bc34d5561317c7eb",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "7ba7f889464451da4976ee4cccdebe7a",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "c4de09d9569488e337f32051f0bfff13",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "4171307f07ef4dbc0b27d5a6a37ad8e0",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "b2d117cc1354c0a1b9bef230f2853105",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "f8019a8391508f00ae490cfa84d3a3e0",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "88adb69fd1cb6a0a0dd5436f8af71cd1",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "d71b7a03b110c9d5e1ab2c1145fc9d61",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "303aa115ab04e758380a5f7c81b32f98",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "db47a50902a8c12df9fa69e55230fdf1",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "751d591785a03436e8fed5202f452774",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "a86029bfcc2ecf58cd390e3dc6508917",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "b57a05f1482c97884fc7546668aaeebd",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "6859196e302f509f4a87318c074c90fd",
+      "reason": "random pick"
+    },
+    {
+      "trace_id": "02bc53a4276fc89cb9f3f6cd56ce040f",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "cdebb350350c00313150815047bb7766",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "cbcf765326b9bc88a2c1b657cdeaf746",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "a3780b7e0c2c59cb33eada8dea87fe31",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "48c22f8507ba0b6a43e7182c60b11535",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "3f0b1eae59205bd5460afdc318139067",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "c93199d2a6ad9961bd5222cef05f62e6",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "85cafdaab526c770bd2a2478d3efa69f",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "c3c89ac9b67eff02f6802db006d42353",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "5dffe44ee07ce8ada1d52634e36013b6",
+      "reason": "batch 2: role=shopper stratified pick"
+    },
+    {
+      "trace_id": "e156d45073ec9314b65bf150edd789d9",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "131bf25c233cbd43087604a174e88150",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "6c4abe2bd10f9fb3eacc461380513041",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "8723cb477733a54ebb0ea931385688a7",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "b536da88a7c1693b664a64533c0e8ad9",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "b4e408c135ea3700110d3121fd6e5154",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "5518644d1d8d79ea7112452ee176653c",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "b584c757802f46379cf3094e0538ff10",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "066674bcd5166276b1fc5cd3e245b454",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "02a6435a6ff4cf8518060fad632da402",
+      "reason": "batch 2: role=merchant stratified pick"
+    },
+    {
+      "trace_id": "099a5c2b895e99078abf81b489e78438",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "1cc34674d7fe5f024dc1426df37b8e13",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "2622fa8de6e0ac7c45a215fc5049bed0",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "8becf774b4d6681afeefe41bb40d79c6",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "8e2ead2415294386a029535c6fb4a7b9",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "996433c65f56d76a1a3c03795732aafc",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "188790aa9a6140d4945c2d14e5d5fe3b",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "ae6d7f2bc75d62245ca306aeb4af8d76",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "0677401a9300cc79d9b5069651f70426",
+      "reason": "batch 2: role=support stratified pick"
+    },
+    {
+      "trace_id": "5d9ca2f509998a5d4e098131b0b2fde5",
+      "reason": "batch 2: role=support stratified pick"
+    }
+  ]
+}

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<!--
+  Cartwheel HW4 review interface — adapted from analysis/ui/index.html for
+  the trace structure actually observed in this project's samples.json
+  (built by analysis.helpers.tools.select_traces / normalize_trace):
+
+    - each sample is one full multi-turn conversation, already merged by
+      scenario_id (analysis.helpers.normalization._merge_multi_turn)
+    - sample.trace is a flat list of {role, ...} messages: user, assistant,
+      tool_call {name, arguments}, tool_result {name, content}, observation
+    - sample.features has turn_count / tool_call_count / distinct_tools /
+      has_retrieval / tokens; sample.meta has role / store / prompt_version /
+      scenario_id — no user_id or latency, so those are pulled instead from
+      the matching HW3 scenario record (served read-only at /api/scenarios,
+      joined here client-side by scenario_id) rather than invented.
+
+  Same file-backed API as the reference UI (server API left unchanged):
+    GET/POST /api/samples /api/annotations /api/patterns /api/suggestions
+    GET      /api/graph /api/scenarios
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cartwheel HW4 review</title>
+<style>
+  :root {
+    --role-user: #2563eb;
+    --role-assistant: #059669;
+    --role-tool-call: #b45309;
+    --role-tool-result: #7c3aed;
+    --role-system: #6b7280;
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --line: #e2e8f0;
+    --muted: #64748b;
+    --text: #0f172a;
+    --hl: #fde68a;
+    --good: #16a34a;
+    --bad: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 13.5px/1.5 -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--text); }
+  button, select, textarea, input { font: inherit; }
+  button { cursor: pointer; }
+
+  #topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  .tabs { display: flex; gap: 4px; }
+  .tabs button {
+    padding: 7px 14px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text); font-weight: 600;
+  }
+  .tabs button.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .nav { display: flex; align-items: center; gap: 8px; }
+  .nav button { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 5px 10px; }
+  .nav button:disabled { opacity: .35; cursor: default; }
+  .spacer { flex: 1; }
+  .stats { color: var(--muted); font-size: 12.5px; }
+
+  #app { display: none; max-width: 1300px; margin: 0 auto; padding: 20px 16px 80px; }
+  #app.active { display: block; }
+  #view-trace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .header-card { margin-bottom: 14px; }
+  .header-card h2 { margin: 0 0 8px; font-family: ui-monospace, monospace; font-size: 16px; }
+  .badge {
+    display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .03em;
+    padding: 2px 8px; border-radius: 999px; margin-right: 6px; text-transform: uppercase;
+  }
+  .badge-challenge { background: #fee2e2; color: #991b1b; }
+  .badge-coverage { background: #dbeafe; color: #1e3a8a; }
+  .badge-dataquality { background: #fef3c7; color: #92400e; }
+  .badge-intent { background: #ede9fe; color: #5b21b6; }
+  .badge-role { background: #dcfce7; color: #166534; }
+
+  .truth-box {
+    margin-top: 10px; padding: 10px 12px; border-radius: 8px;
+    background: #ecfdf5; border: 1px solid #a7f3d0; font-size: 12.5px;
+  }
+  .truth-box .label { font-weight: 700; font-family: ui-monospace, monospace; color: #065f46; }
+  .truth-box .src { color: var(--muted); margin-top: 4px; font-size: 11.5px; }
+
+  .meta-line { margin-top: 10px; color: var(--muted); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 14px; }
+  .meta-line b { color: var(--text); }
+
+  .sysprompt { margin-top: 10px; }
+  .sysprompt summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .sysprompt pre { white-space: pre-wrap; font-size: 11.5px; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 6px; }
+
+  .msg { border-left: 4px solid var(--role-system); background: var(--panel); border-radius: 0 8px 8px 0;
+         padding: 10px 14px; margin-bottom: 10px; position: relative; }
+  .msg.role-user { border-color: var(--role-user); background: #eff6ff; }
+  .msg.role-assistant { border-color: var(--role-assistant); background: #ecfdf5; }
+  .msg.role-tool_call { border-color: var(--role-tool-call); background: #fffbeb; }
+  .msg.role-tool_result { border-color: var(--role-tool-result); background: #f5f3ff; }
+  .msg .role-label { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+  .msg.role-user .role-label { color: var(--role-user); }
+  .msg.role-assistant .role-label { color: var(--role-assistant); }
+  .msg.role-tool_call .role-label { color: var(--role-tool-call); }
+  .msg.role-tool_result .role-label { color: var(--role-tool-result); }
+  .msg .name { font-family: ui-monospace, monospace; font-weight: 700; margin-bottom: 4px; }
+  .msg pre { white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, monospace; font-size: 12px; margin: 0; }
+  .msg .text { white-space: pre-wrap; }
+  .msg .toggle { color: var(--role-tool-result); background: none; border: none; font-size: 11.5px; padding: 4px 0 0; text-decoration: underline; }
+  .msg mark { background: var(--hl); }
+
+  .margin { position: sticky; top: 64px; display: flex; flex-direction: column; gap: 12px; }
+  .compose textarea { width: 100%; min-height: 60px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; resize: vertical; }
+  .compose .quote { font-size: 12px; font-style: italic; color: var(--muted); border-left: 3px solid var(--hl); padding-left: 8px; margin-bottom: 6px; }
+  .compose select { width: 100%; margin: 6px 0; padding: 5px; border: 1px solid var(--line); border-radius: 6px; }
+  .compose .row { display: flex; gap: 6px; margin-top: 6px; }
+  .compose .row button { flex: 1; padding: 6px; border-radius: 6px; border: 1px solid var(--line); background: #fff; }
+  .compose .row button.primary { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .note-item { font-size: 12px; border-bottom: 1px dashed var(--line); padding: 8px 0; }
+  .note-item .quote { font-style: italic; color: var(--muted); }
+  .note-item .meta { color: var(--muted); font-size: 10.5px; margin-top: 3px; display: flex; justify-content: space-between; }
+  .note-item .del { color: var(--bad); background: none; border: none; font-size: 11px; }
+  .label-pill { font-size: 10px; padding: 1px 6px; border-radius: 999px; font-weight: 700; }
+  .label-pill.present { background: #fee2e2; color: #991b1b; }
+  .label-pill.absent { background: #dcfce7; color: #166534; }
+  .empty { color: var(--muted); padding: 40px 20px; text-align: center; }
+  .hint { color: var(--muted); font-size: 12px; }
+
+  /* progress view */
+  .prog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .mode-block { margin-bottom: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+  .mode-block h3 { margin: 0 0 4px; font-family: ui-monospace, monospace; font-size: 13px; display: flex; justify-content: space-between; }
+  .mode-block .def { color: var(--muted); font-size: 12px; margin: 4px 0; }
+  .mode-block .counts { font-size: 11.5px; color: var(--muted); }
+  .add-mode { display: flex; gap: 6px; margin-top: 10px; }
+  .add-mode input { flex: 1; border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+  .add-mode button { border-radius: 6px; border: 1px solid var(--line); background: #0f172a; color: #fff; padding: 6px 12px; }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.grid th, table.grid td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: center; }
+  table.grid th:first-child, table.grid td:first-child { text-align: left; font-family: ui-monospace, monospace; }
+  table.grid tr:hover { background: #f8fafc; cursor: pointer; }
+  .sugg-row { display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed var(--line); padding: 8px 0; font-size: 12px; }
+  .sugg-row .mode { font-family: ui-monospace, monospace; background: #ede9fe; color: #5b21b6; padding: 1px 6px; border-radius: 4px; }
+  .sugg-row .quote { flex: 1; font-style: italic; color: var(--muted); }
+  .sugg-row button { border-radius: 6px; border: 1px solid var(--line); background: #fff; padding: 4px 8px; font-size: 11px; }
+
+  /* map view */
+  #graph-svg { width: 100%; height: 640px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .node { cursor: pointer; }
+  .node:hover { stroke: #0f172a; stroke-width: 2; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="tabs">
+    <button data-view="trace">Content</button>
+    <button data-view="map">Map</button>
+    <button data-view="progress">Progress</button>
+  </div>
+  <div class="nav" id="trace-nav">
+    <button id="prev">&larr;</button>
+    <span id="counter">0 / 0</span>
+    <button id="next">&rarr;</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<div id="app" class="active">
+  <div id="view-trace"></div>
+  <div id="view-map" style="display:none"></div>
+  <div id="view-progress" style="display:none"></div>
+</div>
+
+<script>
+const api = {
+  get: (p) => fetch(p).then(r => r.json()),
+  post: (p, d) => fetch(p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)}).then(r => r.json()),
+};
+
+const state = {
+  samples: [], annotations: [], suggestions: [], patterns: {}, graph: {nodes: [], clusters: []}, scenarios: {},
+  view: 'trace', idx: 0, pendingQuote: null,
+};
+
+// cp1252-as-UTF-8 mojibake repair (same technique as trace_viewer's
+// _fix_text): re-encode the wrongly-decoded string as cp1252 bytes, then
+// decode those bytes as UTF-8. Only characters cp1252 can represent are
+// touched; anything outside that range, or bytes that fail to decode as
+// valid UTF-8, are left exactly as received.
+const CP1252_ENCODE = {
+  0x20AC:0x80, 0x201A:0x82, 0x0192:0x83, 0x201E:0x84, 0x2026:0x85, 0x2020:0x86,
+  0x2021:0x87, 0x02C6:0x88, 0x2030:0x89, 0x0160:0x8A, 0x2039:0x8B, 0x0152:0x8C,
+  0x017D:0x8E, 0x2018:0x91, 0x2019:0x92, 0x201C:0x93, 0x201D:0x94, 0x2022:0x95,
+  0x2013:0x96, 0x2014:0x97, 0x02DC:0x98, 0x2122:0x99, 0x0161:0x9A, 0x203A:0x9B,
+  0x0153:0x9C, 0x017E:0x9E, 0x0178:0x9F,
+};
+function fixMojibake(str) {
+  if (typeof str !== 'string' || !str) return str;
+  const bytes = [];
+  for (const ch of str) {
+    const cp = ch.codePointAt(0);
+    if (cp <= 0xFF) { bytes.push(cp); continue; }
+    const mapped = CP1252_ENCODE[cp];
+    if (mapped === undefined) return str;
+    bytes.push(mapped);
+  }
+  try {
+    return new TextDecoder('utf-8', {fatal: true}).decode(new Uint8Array(bytes));
+  } catch (e) {
+    return str;
+  }
+}
+function deepFixText(value) {
+  if (typeof value === 'string') return fixMojibake(value);
+  if (Array.isArray(value)) return value.map(deepFixText);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const k in value) out[k] = deepFixText(value[k]);
+    return out;
+  }
+  return value;
+}
+
+function escape(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function asAnnotationList(a) {
+  if (Array.isArray(a)) return a;
+  if (a && Array.isArray(a.annotations)) return a.annotations;
+  return [];
+}
+
+function normalizePatterns(p) {
+  if (!p) return [];
+  if (Array.isArray(p.modes)) return p.modes.filter(m => m && m.name);
+  if (typeof p === 'object' && !Array.isArray(p)) {
+    return Object.entries(p).filter(([k]) => k !== 'human_signoff' && k !== 'reconciliation')
+      .map(([name, v]) => ({name, ...(v || {})}));
+  }
+  return [];
+}
+
+async function load() {
+  const [samples, annotations, suggestions, patterns, graph, scenarios] = await Promise.all([
+    api.get('/api/samples'), api.get('/api/annotations'), api.get('/api/suggestions'),
+    api.get('/api/patterns'), api.get('/api/graph'), api.get('/api/scenarios'),
+  ]);
+  state.samples = (Array.isArray(samples) ? samples : []).map(deepFixText);
+  state.annotations = asAnnotationList(annotations);
+  state.suggestions = Array.isArray(suggestions) ? suggestions : [];
+  state.patterns = patterns && typeof patterns === 'object' ? patterns : {};
+  state.graph = graph && typeof graph === 'object' ? graph : {nodes: [], clusters: []};
+  state.scenarios = deepFixText(scenarios && typeof scenarios === 'object' ? scenarios : {});
+  if (state.idx >= state.samples.length) state.idx = 0;
+}
+
+async function persistAnnotations() {
+  const result = await api.post('/api/annotations', state.annotations);
+  if (result && result.error) console.warn('annotation sync:', result.error);
+  return result;
+}
+
+// ---- topbar ----
+
+function renderTopbar() {
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === state.view));
+  document.getElementById('trace-nav').style.visibility = state.view === 'trace' ? 'visible' : 'hidden';
+  const total = state.samples.length;
+  document.getElementById('counter').textContent = total ? `${state.idx + 1} / ${total}` : '0 / 0';
+  document.getElementById('prev').disabled = state.idx <= 0;
+  document.getElementById('next').disabled = state.idx >= total - 1;
+  const annotatedTraces = new Set(state.annotations.map(a => a.trace_id)).size;
+  const notes = state.annotations.length;
+  document.getElementById('stats').textContent =
+    `${annotatedTraces} / ${total} traces annotated, ${notes} note${notes === 1 ? '' : 's'}`;
+}
+
+// ---- trace view ----
+
+function scenarioFor(sample) {
+  const sid = (sample.meta && sample.meta.scenario_id) || sample.trace_id;
+  return state.scenarios[sid] || null;
+}
+
+function truncated(text, limit) {
+  if (text.length <= limit) return {short: text, isLong: false};
+  return {short: text.slice(0, limit), isLong: true};
+}
+
+function sessionMatches(args, sess) {
+  // Flag tool arguments whose value equals the caller's session IDs, so a
+  // reviewer can see where a value like "store": "1" came from.
+  const notes = [];
+  if (!args || typeof args !== 'object') return notes;
+  const ids = [['store ID', sess.store_id, 'store'], ['user ID', sess.user_id, 'user']];
+  for (const [key, val] of Object.entries(args)) {
+    if (val === null || val === undefined || val === '') continue;
+    for (const [label, id, keyword] of ids) {
+      if (key.toLowerCase().includes(keyword) && id !== null && id !== undefined && String(val) === String(id)) {
+        notes.push(`argument "${key}" = ${JSON.stringify(val)} equals the session ${label} (${id})`);
+      }
+    }
+  }
+  return notes;
+}
+
+function renderMessage(msg, i, sess) {
+  const role = msg.role || 'observation';
+  const cls = ['user', 'assistant', 'tool_call', 'tool_result'].includes(role) ? role : 'observation';
+  let label = role.replace(/_/g, ' ');
+  let body = '';
+  if (role === 'tool_call') {
+    const args = JSON.stringify(msg.arguments ?? {}, null, 2);
+    const t = truncated(args, 500);
+    const matchNotes = sessionMatches(msg.arguments, sess || {})
+      .map(n => `<div class="hint" style="color:var(--role-tool-call); margin-bottom:4px">${escape(n)}</div>`).join('');
+    body = `<div class="name">${escape(msg.name || '')}</div>` + matchNotes +
+      `<pre data-full="${escape(args)}">${escape(t.short)}${t.isLong ? '…' : ''}</pre>` +
+      (t.isLong ? `<button class="toggle" data-action="expand">Show full arguments (${args.split('\n').length} lines)</button>` : '');
+  } else if (role === 'tool_result') {
+    const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content ?? {}, null, 2);
+    const t = truncated(content, 500);
+    body = `<div class="name">${escape(msg.name || '')}</div>` +
+      `<pre data-full="${escape(content)}">${escape(t.short)}${t.isLong ? '…' : ''}</pre>` +
+      (t.isLong ? `<button class="toggle" data-action="expand">Show full result (${content.split('\n').length} lines)</button>` : '');
+  } else if (role === 'observation') {
+    label = msg.label || 'observation';
+    body = `<div class="text">${escape(msg.text || '')}</div>`;
+  } else {
+    body = `<div class="text">${escape(msg.text || '')}</div>`;
+  }
+  return `<div class="msg role-${cls}" data-msg-index="${i}">` +
+    `<div class="role-label">${escape(label)}</div>${body}</div>`;
+}
+
+function renderTrace() {
+  const el = document.getElementById('view-trace');
+  if (!state.samples.length) {
+    el.innerHTML = `<div class="card empty">No samples loaded yet.<br><br>` +
+      `Run <code>analysis.helpers.tools.select_traces(...)</code> to populate ` +
+      `<code>analysis/state/samples.json</code>, then reload this page.</div>`;
+    return;
+  }
+  const sample = state.samples[state.idx];
+  const scenario = scenarioFor(sample);
+  const tuple = (scenario && scenario.tuple) || {};
+  const expected = scenario && scenario.expected;
+  const feats = sample.features || {};
+
+  const badges = [];
+  if (scenario) {
+    badges.push(`<span class="badge badge-${scenario.scenario_group === 'challenge' ? 'challenge' : 'coverage'}">${escape(scenario.scenario_group || '')}</span>`);
+    if (scenario.data_quality_case_id) badges.push(`<span class="badge badge-dataquality">data quality</span>`);
+    if (tuple.intent) badges.push(`<span class="badge badge-intent">${escape(tuple.intent)}</span>`);
+    if (tuple.role) badges.push(`<span class="badge badge-role">${escape(tuple.role)}</span>`);
+  }
+
+  let truthBox = '';
+  if (expected) {
+    const src = expected.source ? `${escape(expected.source.type || '')} / ${escape(expected.source.reference || '')}` : '';
+    truthBox = `<div class="truth-box">` +
+      `<div class="label">EXPECTED: ${escape(expected.outcome || '')}</div>` +
+      `<div>${escape(expected.reason || '')}</div>` +
+      (src ? `<div class="src">Source: ${src}</div>` : '') +
+      `</div>`;
+  }
+
+  const sess = (scenario && scenario.session) || {};
+  const metaBits = [
+    ['Role', tuple.role || (sample.meta && sample.meta.role)],
+    ['User', sess.user_name ? `${sess.user_id} (${sess.user_name})` : tuple.user_id],
+    ['Session store ID', sess.store_id !== null && sess.store_id !== undefined ? `${sess.store_id}${sess.store_name ? ' (' + sess.store_name + ')' : ''}` : null],
+    ['Difficulty', tuple.difficulty],
+    ['Tools needed', tuple.tools_needed],
+    ['Style', tuple.user_style],
+    ['Turns', feats.turn_count],
+    ['Tool calls', feats.tool_call_count],
+  ].filter(([, v]) => v !== undefined && v !== null && v !== '');
+  const metaLine = metaBits.map(([k, v]) => `<span><b>${k}:</b> ${escape(String(v))}</span>`).join('');
+
+  const sysMsg = (sample.trace || []).find(m => m.role === 'system');
+  const sysBlock = sysMsg
+    ? `<details class="sysprompt"><summary>System prompt (click to expand)</summary><pre>${escape(sysMsg.text || '')}</pre></details>`
+    : '';
+
+  const conversation = (sample.trace || [])
+    .filter(m => m.role !== 'system')
+    .map((m, i) => renderMessage(m, i, sess)).join('');
+
+  el.innerHTML =
+    `<div>` +
+      `<div class="card header-card">` +
+        `<h2>${escape(sample.trace_id)}</h2>` +
+        badges.join('') +
+        truthBox +
+        `<div class="meta-line">${metaLine}</div>` +
+        (sample.reason ? `<div class="hint" style="margin-top:8px">Sampled because: ${escape(sample.reason)}</div>` : '') +
+        sysBlock +
+      `</div>` +
+      `<div id="conversation">${conversation}</div>` +
+    `</div>` +
+    `<div class="margin" id="margin"></div>`;
+
+  renderMargin();
+  document.getElementById('conversation').addEventListener('mouseup', onSelectText);
+  document.getElementById('conversation').querySelectorAll('.toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pre = btn.previousElementSibling;
+      pre.textContent = pre.dataset.full;
+      btn.remove();
+    });
+  });
+}
+
+function onSelectText(ev) {
+  const sel = window.getSelection();
+  const text = sel ? sel.toString().trim() : '';
+  if (!text) return;
+  const msgEl = ev.target.closest('[data-msg-index]');
+  state.pendingQuote = {text, msgIndex: msgEl ? Number(msgEl.dataset.msgIndex) : null};
+  renderMargin();
+}
+
+function renderMargin() {
+  const el = document.getElementById('margin');
+  if (!el) return;
+  const sample = state.samples[state.idx];
+  const modes = normalizePatterns(state.patterns);
+  // The mode + present/absent controls are Part E's structured-labeling
+  // step, which only makes sense once a taxonomy exists (Part D). Before
+  // that, show plain note-taking only — no dead controls.
+  const modeOptions = modes.map(m => `<option value="${escape(m.name)}">${escape(m.name)}</option>`).join('');
+  const modeControls = modes.length
+    ? `<select id="__MODE_ID__">${modeOptions}</select>` +
+      `<div class="row"><button data-label="1">Mark present</button><button data-label="0">Mark absent</button></div>`
+    : '';
+
+  let compose = '';
+  if (state.pendingQuote) {
+    compose = `<div class="card compose">` +
+      `<div class="quote">"${escape(state.pendingQuote.text)}"</div>` +
+      `<textarea id="note-text" placeholder="What's happening here?"></textarea>` +
+      modeControls.replace('__MODE_ID__', 'note-mode') +
+      `<div class="row"><button class="primary" id="save-note">Save note</button><button id="cancel-note">Cancel</button></div>` +
+    `</div>`;
+  } else {
+    compose = `<div class="card compose">` +
+      `<div class="hint" style="margin-bottom:6px">Select any text above to quote it, or write a general note below.</div>` +
+      `<textarea id="general-note-text" placeholder="General note about this trace..."></textarea>` +
+      modeControls.replace('__MODE_ID__', 'general-note-mode') +
+      `<div class="row"><button class="primary" id="general-save">Save note</button></div>` +
+    `</div>`;
+  }
+
+  const alreadyReviewed = state.annotations.some(a => a.trace_id === sample.trace_id);
+  const noFailureBlock = `<div class="card">` +
+    `<button id="no-failure-btn" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--line); background:#fff;">` +
+    `${alreadyReviewed ? 'Already has notes' : 'No failure observed'}</button>` +
+    `<div class="hint" style="margin-top:6px">Per Part B: read until the first failure and stop; if there truly isn't one, record that explicitly so this trace counts as reviewed.</div></div>`;
+
+  const notes = state.annotations.filter(a => a.trace_id === sample.trace_id)
+    .slice().sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+  const notesHtml = notes.length
+    ? notes.map(a => `<div class="note-item" data-id="${escape(a.id)}">` +
+        (a.quote ? `<div class="quote">"${escape(a.quote)}"</div>` : '') +
+        `<div>${escape(a.note || '')}</div>` +
+        `<div class="meta"><span>${a.mode ? `<span class="label-pill ${a.label == 1 ? 'present' : 'absent'}">${escape(a.mode)}: ${a.label == 1 ? 'present' : 'absent'}</span>` : ''}</span>` +
+        `<button class="del" data-id="${escape(a.id)}">delete</button></div></div>`).join('')
+    : `<div class="hint">No notes on this trace yet.</div>`;
+
+  el.innerHTML = noFailureBlock + compose + `<div class="card"><b style="font-size:12px">Notes on this trace</b><div style="margin-top:8px">${notesHtml}</div></div>`;
+
+  const noFailureBtn = document.getElementById('no-failure-btn');
+  if (noFailureBtn && !alreadyReviewed) {
+    noFailureBtn.addEventListener('click', () => saveAnnotation('', 'no failure observed', null, null));
+  } else if (noFailureBtn) {
+    noFailureBtn.disabled = true;
+  }
+
+  const noteTextId = state.pendingQuote ? 'note-text' : 'general-note-text';
+  const modeSelId = state.pendingQuote ? 'note-mode' : 'general-note-mode';
+  const quoteText = state.pendingQuote ? state.pendingQuote.text : null;
+  const modeValue = () => { const sel = document.getElementById(modeSelId); return sel ? sel.value : null; };
+
+  if (state.pendingQuote) {
+    document.getElementById('cancel-note').addEventListener('click', () => { state.pendingQuote = null; renderMargin(); });
+  }
+  const saveBtn = document.getElementById(state.pendingQuote ? 'save-note' : 'general-save');
+  if (saveBtn) saveBtn.addEventListener('click', () => saveAnnotation('', document.getElementById(noteTextId).value, modeValue(), quoteText));
+  el.querySelectorAll('.row button[data-label]').forEach(btn => {
+    btn.addEventListener('click', () => saveAnnotation(btn.dataset.label, document.getElementById(noteTextId).value, modeValue(), quoteText));
+  });
+  el.querySelectorAll('.del').forEach(btn => btn.addEventListener('click', () => deleteAnnotation(btn.dataset.id)));
+}
+
+function saveAnnotation(labelStr, note, mode, quote) {
+  const sample = state.samples[state.idx];
+  if (!note && !quote) { alert('Write a note first — there\'s nothing to save yet.'); return; }
+  const rec = {
+    id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    trace_id: sample.trace_id,
+    scenario_id: (sample.meta && sample.meta.scenario_id) || null,
+    quote: quote || null,
+    note: note || '',
+    mode: mode || null,
+    label: labelStr === '' ? null : Number(labelStr),
+    source: 'human',
+    ts: new Date().toISOString(),
+  };
+  state.annotations.push(rec);
+  state.pendingQuote = null;
+  persistAnnotations();
+  renderMargin();
+  renderTopbar();
+}
+
+function deleteAnnotation(id) {
+  state.annotations = state.annotations.filter(a => a.id !== id);
+  persistAnnotations();
+  renderMargin();
+  renderTopbar();
+}
+
+// ---- map view ----
+
+function renderMap() {
+  const el = document.getElementById('view-map');
+  const nodes = state.graph.nodes || [];
+  if (!nodes.length) {
+    el.innerHTML = `<div class="card empty">No 2D projection yet.<br><br>The graph fills in once the sample set has enough traces to cluster.</div>`;
+    return;
+  }
+  const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const pad = 30, w = 1100, h = 620;
+  const sx = x => pad + (maxX > minX ? (x - minX) / (maxX - minX) : 0.5) * (w - 2 * pad);
+  const sy = y => pad + (maxY > minY ? (y - minY) / (maxY - minY) : 0.5) * (h - 2 * pad);
+  const annotatedIds = new Set(state.annotations.map(a => a.trace_id));
+  const hue = c => { let h2 = 0; const s = String(c); for (let i = 0; i < s.length; i++) h2 = (h2 * 31 + s.charCodeAt(i)) % 360; return h2; };
+
+  const circles = nodes.map(n => {
+    const color = `hsl(${hue(n.cluster ?? 0)}, 60%, 55%)`;
+    const ring = annotatedIds.has(n.id) ? 'stroke="#0f172a" stroke-width="2"' : 'stroke="none"';
+    return `<circle class="node" data-id="${escape(n.id)}" cx="${sx(n.x)}" cy="${sy(n.y)}" r="6" fill="${color}" ${ring}><title>${escape(n.id)}</title></circle>`;
+  }).join('');
+
+  el.innerHTML = `<div class="hint" style="margin-bottom:8px">Each point is a sampled trace; color = cluster, ring = already annotated. Click to open.</div>` +
+    `<svg id="graph-svg" viewBox="0 0 ${w} ${h}">${circles}</svg>`;
+
+  el.querySelectorAll('.node').forEach(c => c.addEventListener('click', () => {
+    const id = c.dataset.id;
+    const i = state.samples.findIndex(s => s.trace_id === id);
+    if (i >= 0) { state.idx = i; state.view = 'trace'; renderAll(); }
+  }));
+}
+
+// ---- progress view ----
+
+function renderProgress() {
+  const el = document.getElementById('view-progress');
+  const modes = normalizePatterns(state.patterns);
+  const total = state.samples.length;
+  const annotatedTraces = new Set(state.annotations.map(a => a.trace_id)).size;
+  const pct = total ? Math.round(100 * annotatedTraces / total) : 0;
+
+  const modeBlocks = modes.length
+    ? modes.map(m => {
+        const rows = state.annotations.filter(a => a.mode === m.name && (a.label === 0 || a.label === 1));
+        const present = rows.filter(r => r.label === 1).length;
+        const absent = rows.filter(r => r.label === 0).length;
+        return `<div class="mode-block"><h3>${escape(m.name)}<span class="counts">${present} present / ${absent} absent</span></h3>` +
+          `<div class="def">${escape(m.definition || '')}</div></div>`;
+      }).join('')
+    : `<div class="hint">No failure modes defined yet. Add one below once open coding has surfaced a pattern.</div>`;
+
+  const gridRows = state.samples.map(s => {
+    const cells = modes.map(m => {
+      const rows = state.annotations.filter(a => a.trace_id === s.trace_id && a.mode === m.name && (a.label === 0 || a.label === 1));
+      const last = rows[rows.length - 1];
+      if (!last) return '<td>–</td>';
+      return `<td style="color:${last.label === 1 ? 'var(--bad)' : 'var(--good)'}">${last.label === 1 ? '✓' : '✗'}</td>`;
+    }).join('');
+    const noteCount = state.annotations.filter(a => a.trace_id === s.trace_id).length;
+    return `<tr data-id="${escape(s.trace_id)}"><td>${escape(s.trace_id)}</td><td>${noteCount}</td>${cells}</tr>`;
+  }).join('');
+
+  const suggRows = state.suggestions.length
+    ? state.suggestions.map((s, i) => `<div class="sugg-row" data-i="${i}">` +
+        `<span class="mode">${escape(s.mode || '')}</span><span class="quote">"${escape(s.quote || '')}" &middot; ${escape(s.trace_id || '')}</span>` +
+        `<button data-action="accept" data-i="${i}">Accept</button><button data-action="reject" data-i="${i}">Reject</button></div>`).join('')
+    : `<div class="hint">No pending suggestions.</div>`;
+
+  el.innerHTML = `<div class="prog-grid">` +
+    `<div class="card">` +
+      `<b>Overall progress</b>` +
+      `<div class="hint" style="margin:8px 0">${annotatedTraces} / ${total} traces have at least one note (${pct}%)</div>` +
+      `<b style="font-size:12px">Failure mode taxonomy</b>` +
+      `<div style="margin-top:8px">${modeBlocks}</div>` +
+      `<div class="add-mode">` +
+        `<input id="new-mode-name" placeholder="mode_name_snake_case" />` +
+        `<input id="new-mode-def" placeholder="definition" style="flex:2" />` +
+        `<button id="add-mode-btn">Add mode</button>` +
+      `</div>` +
+    `</div>` +
+    `<div class="card">` +
+      `<b>Agent suggestions</b>` +
+      `<div style="margin-top:8px">${suggRows}</div>` +
+    `</div>` +
+  `</div>` +
+  `<div class="card" style="margin-top:20px; overflow-x:auto">` +
+    `<b>Structured labeling</b>` +
+    `<table class="grid"><thead><tr><th>trace</th><th>notes</th>${modes.map(m => `<th>${escape(m.name)}</th>`).join('')}</tr></thead>` +
+    `<tbody>${gridRows}</tbody></table>` +
+  `</div>`;
+
+  el.querySelectorAll('table.grid tbody tr').forEach(tr => tr.addEventListener('click', () => {
+    const i = state.samples.findIndex(s => s.trace_id === tr.dataset.id);
+    if (i >= 0) { state.idx = i; state.view = 'trace'; renderAll(); }
+  }));
+  document.getElementById('add-mode-btn').addEventListener('click', addMode);
+  el.querySelectorAll('.sugg-row button').forEach(btn => btn.addEventListener('click', () => handleSuggestion(Number(btn.dataset.i), btn.dataset.action)));
+}
+
+async function addMode() {
+  const name = document.getElementById('new-mode-name').value.trim();
+  const definition = document.getElementById('new-mode-def').value.trim();
+  if (!name) return;
+  const modes = normalizePatterns(state.patterns);
+  modes.push({name, definition, status: 'draft', example_trace_ids: [], example_quotes: []});
+  state.patterns = {modes};
+  await api.post('/api/patterns', state.patterns);
+  renderProgress();
+}
+
+async function handleSuggestion(i, action) {
+  const s = state.suggestions[i];
+  if (action === 'accept') {
+    state.annotations.push({
+      id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      trace_id: s.trace_id, quote: s.quote || null, note: `[accepted suggestion] ${s.mode || ''}`,
+      mode: s.mode || null, label: 1, source: 'accepted_suggestion', ts: new Date().toISOString(),
+    });
+    await persistAnnotations();
+  }
+  state.suggestions = state.suggestions.filter((_, idx) => idx !== i);
+  await api.post('/api/suggestions', state.suggestions);
+  renderProgress();
+  renderTopbar();
+}
+
+// ---- shell ----
+
+function renderAll() {
+  document.getElementById('view-trace').style.display = state.view === 'trace' ? 'grid' : 'none';
+  document.getElementById('view-map').style.display = state.view === 'map' ? 'block' : 'none';
+  document.getElementById('view-progress').style.display = state.view === 'progress' ? 'block' : 'none';
+  renderTopbar();
+  if (state.view === 'trace') renderTrace();
+  else if (state.view === 'map') renderMap();
+  else renderProgress();
+}
+
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { state.view = b.dataset.view; state.pendingQuote = null; renderAll(); }));
+document.getElementById('prev').addEventListener('click', () => { if (state.idx > 0) { state.idx--; state.pendingQuote = null; renderAll(); } });
+document.getElementById('next').addEventListener('click', () => { if (state.idx < state.samples.length - 1) { state.idx++; state.pendingQuote = null; renderAll(); } });
+
+async function poll() {
+  try {
+    const [samples, suggestions, patterns, annotations] = await Promise.all([
+      api.get('/api/samples'), api.get('/api/suggestions'), api.get('/api/patterns'), api.get('/api/annotations'),
+    ]);
+    const remote = asAnnotationList(annotations);
+    const seen = new Set(state.annotations.map(a => a.id));
+    const merged = state.annotations.concat(remote.filter(a => a.id && !seen.has(a.id)));
+    state.samples = Array.isArray(samples) ? samples.map(deepFixText) : state.samples;
+    state.suggestions = Array.isArray(suggestions) ? suggestions : state.suggestions;
+    state.patterns = patterns && typeof patterns === 'object' ? patterns : state.patterns;
+    state.annotations = merged;
+    renderTopbar();
+    if (state.view === 'progress') renderProgress();
+  } catch (e) { /* offline tick, ignore */ }
+}
+
+(async function init() {
+  await load();
+  renderAll();
+  setInterval(poll, 2000);
+})();
+</script>
+</body>
+</html>
