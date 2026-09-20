@@ -1,1 +1,252 @@
-[]
+[
+  {
+    "id": "sugg-missing_data_not_flagged-support-0015",
+    "trace_id": "9bfb602e43fda8eb531395656361af65",
+    "scenario_id": "support-0015",
+    "mode": "missing_data_not_flagged",
+    "reason": "deterministic filter: same missing-delivery-date scenario family",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.385463+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0031",
+    "trace_id": "dc1f3ea0c7cd9b1a3126fd8362a2cf5c",
+    "scenario_id": "support-0031",
+    "mode": "missing_data_not_flagged",
+    "reason": "deterministic filter: same missing-delivery-date scenario family",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.387468+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0233",
+    "trace_id": "83be30ceb8cbd1dc21eb11c28c28c535",
+    "scenario_id": "support-0233",
+    "mode": "missing_data_not_flagged",
+    "reason": "deterministic filter + similarity search: missing delivery date",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.386473+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0234",
+    "trace_id": "95f3735f679f54d277994632fefb2da0",
+    "scenario_id": "support-0234",
+    "mode": "missing_data_not_flagged",
+    "reason": "deterministic filter + similarity search: missing delivery date",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.387468+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0236",
+    "trace_id": "4fc6072a4edc7b60361f9efcc9bbb864",
+    "scenario_id": "support-0236",
+    "mode": "missing_data_not_flagged",
+    "reason": "similarity search: reversed dates (near negative if flagged)",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.387468+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0237",
+    "trace_id": "39ad4d264509f901fe5207aef70c1997",
+    "scenario_id": "support-0237",
+    "mode": "missing_data_not_flagged",
+    "reason": "similarity search: reversed dates (near negative if flagged)",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.387468+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0238",
+    "trace_id": "9e5429468d8e6f2234bb70f1703c5387",
+    "scenario_id": "support-0238",
+    "mode": "missing_data_not_flagged",
+    "reason": "similarity search: reversed dates (near negative if flagged)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.388972+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0049",
+    "trace_id": "748b706e644f54ce822f8fa08a02abb3",
+    "scenario_id": "support-0049",
+    "mode": "missing_data_not_flagged",
+    "reason": "similarity search: clean order status (close negative)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.388972+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0060",
+    "trace_id": "cd8cf404cd46d641f7972b0f40e3d34e",
+    "scenario_id": "support-0060",
+    "mode": "missing_data_not_flagged",
+    "reason": "similarity search: clean order status (close negative)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.388972+00:00"
+  },
+  {
+    "id": "sugg-missing_data_not_flagged-support-0240",
+    "trace_id": "b347b11ff5d09a0636df1d102462915a",
+    "scenario_id": "support-0240",
+    "mode": "missing_data_not_flagged",
+    "reason": "similarity search: store/product mismatch (boundary test)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T18:01:01.389977+00:00"
+  },
+  {
+    "id": "sugg-internal_policy_id_shown-support-0190",
+    "trace_id": "b390c2be8fa9ea16fb800518b500b666",
+    "scenario_id": "support-0190",
+    "mode": "internal_policy_id_shown",
+    "reason": "policy consulted but no policy ID shown in the reply (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:12:49.508738+00:00"
+  },
+  {
+    "id": "sugg-internal_policy_id_shown-support-0187",
+    "trace_id": "17282a6476bb6a7e1d643dd9afde8238",
+    "scenario_id": "support-0187",
+    "mode": "internal_policy_id_shown",
+    "reason": "policy consulted but no policy ID shown in the reply (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:12:49.509746+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0121",
+    "trace_id": "94ef36c32f814fa8471f851c3e44da20",
+    "scenario_id": "support-0121",
+    "mode": "persona_not_clarified",
+    "reason": "merchant writing like a shopper (lead)",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.789640+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0115",
+    "trace_id": "a983b971f7a6496f7434392ef64c5be8",
+    "scenario_id": "support-0115",
+    "mode": "persona_not_clarified",
+    "reason": "merchant writing like a shopper (lead)",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.789640+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0109",
+    "trace_id": "64d81544c0fd298ed04b2ee0b20076f5",
+    "scenario_id": "support-0109",
+    "mode": "persona_not_clarified",
+    "reason": "merchant writing like a shopper (lead)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.789640+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0097",
+    "trace_id": "2ee0837b1917e44b756c2c05974cf578",
+    "scenario_id": "support-0097",
+    "mode": "persona_not_clarified",
+    "reason": "merchant writing like a shopper (lead)",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.803957+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0244",
+    "trace_id": "4052427482eff535e86a54b71dcb7bc9",
+    "scenario_id": "support-0244",
+    "mode": "persona_not_clarified",
+    "reason": "in-role voice (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.803957+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0241",
+    "trace_id": "7a65f606636a828f05cc00f3830925d8",
+    "scenario_id": "support-0241",
+    "mode": "persona_not_clarified",
+    "reason": "in-role voice (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.803957+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0217",
+    "trace_id": "e131f88180760a41e3dd3891394b8cec",
+    "scenario_id": "support-0217",
+    "mode": "persona_not_clarified",
+    "reason": "in-role voice (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.803957+00:00"
+  },
+  {
+    "id": "sugg-persona_not_clarified-support-0075",
+    "trace_id": "f41f965d5a0feb5efb5f076c8a228798",
+    "scenario_id": "support-0075",
+    "mode": "persona_not_clarified",
+    "reason": "in-role voice (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:23:53.803957+00:00"
+  },
+  {
+    "id": "sugg-rejected_tool_argument-support-0034",
+    "trace_id": "a35588e19cc0a51dd071cedd46c5954c",
+    "scenario_id": "support-0034",
+    "mode": "rejected_tool_argument",
+    "reason": "a tool result rejected the agent's argument (lead)",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T19:29:28.256401+00:00"
+  },
+  {
+    "id": "sugg-rejected_tool_argument-support-0245",
+    "trace_id": "8fac5880ff66217f3f2a3052ef471da3",
+    "scenario_id": "support-0245",
+    "mode": "rejected_tool_argument",
+    "reason": "product-by-number request, no rejection (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:29:28.256401+00:00"
+  },
+  {
+    "id": "sugg-rejected_tool_argument-support-0242",
+    "trace_id": "2f2006ecdfb6a07eba43115e56d1ae85",
+    "scenario_id": "support-0242",
+    "mode": "rejected_tool_argument",
+    "reason": "product-by-number request, no rejection (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:29:28.256401+00:00"
+  },
+  {
+    "id": "sugg-rejected_tool_argument-support-0018",
+    "trace_id": "e3e14a25b3d1fa48e4368e8550ef87bf",
+    "scenario_id": "support-0018",
+    "mode": "rejected_tool_argument",
+    "reason": "product-by-number request, no rejection (close negative candidate)",
+    "status": "rejected",
+    "quote": "",
+    "decided_at": "2026-09-19T19:29:28.256401+00:00"
+  },
+  {
+    "id": "sugg-reply_misses_the_ask-support-0186",
+    "trace_id": "20d7a540cf309f7fb06e109761c7ed61",
+    "scenario_id": "support-0186",
+    "mode": "reply_misses_the_ask",
+    "reason": "dispute ticket opened with no explanation of the dispute window",
+    "status": "accepted",
+    "quote": "",
+    "decided_at": "2026-09-19T19:32:19.367238+00:00"
+  }
+]

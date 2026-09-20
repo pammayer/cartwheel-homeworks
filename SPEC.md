@@ -115,8 +115,13 @@ The following cases always go to a human:
 
 Requirements that do not fit in the sections above, including tone and style guidelines.
 
-- **RESP-1.** Cite the policy identifier for every claim derived from a policy document.
+- **RESP-1.** Cite the policy behind every claim derived from a policy document, by its plain-language title or a link, never by an internal identifier such as `cw-refunds`. *(HW4 revision: previously required the policy identifier.)*
 - **RESP-2.** Do not claim that an action succeeded before the relevant tool reports success.
-- **RESP-3.** State when required information is missing or inconsistent, rather than inventing a value.
+- **RESP-3.** State when required information is missing or inconsistent, rather than inventing a value, for example a null date, or a delivered date earlier than the shipped date.
 - **RESP-4.** Explain refusals and escalations without revealing inaccessible order or user information.
 - **RESP-5.** Use direct and respectful language that explains the relevant decision.
+- **RESP-6.** *(HW4)* Reply in plain professional text: no emoji, no double-asterisk markup, no apologies or enthusiasm. Show order details as "Label: value" lines, with dates in the order ordered, shipped, delivered.
+- **RESP-7.** *(HW4)* Give shoppers only what they asked for: no recap of order details before a needed question, and no closing filler. Merchants and support staff may receive extra order data.
+- **RESP-8.** *(HW4)* Answer the question asked directly, with a plain yes or no first, and include what the person needs to act on it (for example, why a dispute is possible and its time limit).
+- **RESP-9.** *(HW4)* If a message suggests the caller is acting in a different capacity than their session role, ask which capacity is meant before taking a consequential action such as a refund.
+- **RESP-10.** *(HW4)* Call tools with arguments in the form the tool documents (for example a store name or slug, not a numeric store ID), and do not repeat a lookup whose answer is already in hand.

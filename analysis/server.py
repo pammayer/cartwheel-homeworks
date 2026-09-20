@@ -42,9 +42,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sqlite3
 import threading
 import time
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -179,10 +181,31 @@ class ReviewHandler(BaseHTTPRequestHandler):
             self._send_json(_read_scenarios())
             return
 
+        if path == "/api/labels":
+            self._send_json(_live_labels())
+            return
+
+        if path == "/api/audit":
+            self._send_json(_read_json(STATE_DIR / "audit_sample.json", {"cells": []}))
+            return
+
         self._send_json({"error": f"unknown path: {path}"}, status=404)
 
     def do_POST(self) -> None:  # noqa: N802
         path = self.path.split("?", 1)[0]
+        if path == "/api/labels":
+            body = self._read_body()
+            if not isinstance(body, dict) or not body.get("trace_id"):
+                self._send_json({"error": "expected {trace_id, mode, label, evidence}"}, status=400)
+                return
+            try:
+                result = _write_label(str(body["trace_id"]), str(body.get("mode", "")),
+                                      body.get("label"), str(body.get("evidence") or ""))
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+            self._send_json({"ok": True, **result})
+            return
         if path not in API_FILES:
             self._send_json({"error": f"cannot POST to {path}"}, status=404)
             return
@@ -258,6 +281,70 @@ def _attach_session_info(scenarios: dict[str, Any]) -> None:
                 "user_id": row[0], "user_name": row[1], "role": row[2],
                 "store_id": row[3], "store_name": row[4],
             }
+
+
+LABELS_DIR = STATE_DIR / "labels"
+_MODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+
+
+def _read_label_rows(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if not path.exists():
+        return rows
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return rows
+
+
+def _live_labels() -> dict[str, dict[str, Any]]:
+    """Current human label per (mode, trace): {mode: {trace_id: {label, evidence}}}.
+    Superseded records are the flip history and are skipped."""
+    out: dict[str, dict[str, Any]] = {}
+    if not LABELS_DIR.exists():
+        return out
+    for path in sorted(LABELS_DIR.glob("*.jsonl")):
+        live: dict[str, Any] = {}
+        for row in _read_label_rows(path):
+            if row.get("superseded_by") or row.get("label") not in (0, 1):
+                continue
+            live[str(row["trace_id"])] = {"label": row["label"], "evidence": row.get("evidence", "")}
+        out[path.stem] = live
+    return out
+
+
+def _write_label(trace_id: str, mode: str, label: Any, evidence: str) -> dict[str, Any]:
+    """Set (0/1) or clear (None) one trace's label for one mode.
+
+    Label files are append-only in spirit: a flip marks the old record
+    ``superseded_by`` and appends the new one; a clear only marks the old one.
+    """
+    if not _MODE_RE.match(mode or ""):
+        raise ValueError("invalid mode name")
+    if label not in (0, 1, None):
+        raise ValueError("label must be 0, 1 or null")
+    path = LABELS_DIR / f"{mode}.jsonl"
+    rows = _read_label_rows(path)
+    now = datetime.now(timezone.utc).isoformat()
+    current = next((r for r in rows if r.get("trace_id") == trace_id and not r.get("superseded_by")), None)
+    if current is not None and current.get("label") == label:
+        return {"changed": False}
+    if current is None and label is None:
+        return {"changed": False}
+    for row in rows:
+        if row.get("trace_id") == trace_id and not row.get("superseded_by"):
+            row["superseded_by"] = now
+    if label is not None:
+        rows.append({"trace_id": trace_id, "mode": mode, "label": label,
+                     "evidence": evidence or "", "source": "human", "ts": now})
+    LABELS_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".jsonl.tmp")
+    tmp.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
+    tmp.replace(path)
+    return {"changed": True}
 
 
 def _count(data: Any) -> int:

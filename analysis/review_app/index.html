@@ -61,9 +61,9 @@
   .spacer { flex: 1; }
   .stats { color: var(--muted); font-size: 12.5px; }
 
-  #app { display: none; max-width: 1300px; margin: 0 auto; padding: 20px 16px 80px; }
+  #app { display: none; max-width: 1480px; margin: 0 auto; padding: 20px 16px 80px; }
   #app.active { display: block; }
-  #view-trace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+  #view-trace { display: grid; grid-template-columns: minmax(0, 1fr) 470px; gap: 20px; align-items: start; }
 
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
   .header-card { margin-bottom: 14px; }
@@ -109,7 +109,7 @@
   .msg .toggle { color: var(--role-tool-result); background: none; border: none; font-size: 11.5px; padding: 4px 0 0; text-decoration: underline; }
   .msg mark { background: var(--hl); }
 
-  .margin { position: sticky; top: 64px; display: flex; flex-direction: column; gap: 12px; }
+  .margin { position: sticky; top: 64px; display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 80px); overflow-y: auto; }
   .compose textarea { width: 100%; min-height: 60px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; resize: vertical; }
   .compose .quote { font-size: 12px; font-style: italic; color: var(--muted); border-left: 3px solid var(--hl); padding-left: 8px; margin-bottom: 6px; }
   .compose select { width: 100%; margin: 6px 0; padding: 5px; border: 1px solid var(--line); border-radius: 6px; }
@@ -125,6 +125,22 @@
   .label-pill.absent { background: #dcfce7; color: #166534; }
   .empty { color: var(--muted); padding: 40px 20px; text-align: center; }
   .hint { color: var(--muted); font-size: 12px; }
+
+
+  .judge-row { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  .judge-name { font-family: ui-monospace, monospace; font-size: 12px; cursor: help; overflow-wrap: anywhere; }
+  .judge-hint { grid-column: 1 / -1; margin-top: 2px; font-size: 11px; }
+  .seg-group { display: flex; gap: 4px; }
+  .seg { flex: none; width: 74px; padding: 3px 6px; border: 1px solid var(--line); background: #fff; border-radius: 6px; font-size: 12px; }
+  .seg.on-1 { background: #fee2e2; border-color: #dc2626; color: #991b1b; font-weight: 700; }
+  .seg.on-0 { background: #dcfce7; border-color: #16a34a; color: #166534; font-weight: 700; }
+  #margin .row button { width: 100%; }
+  .tag { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .03em; padding: 1px 6px; border-radius: 999px; font-family: -apple-system, Segoe UI, sans-serif; }
+  .tag-hand { background: #ffedd5; color: #9a3412; border: 1px solid #fb923c; }
+  .tag-rule { background: #f1f5f9; color: #475569; border: 1px dashed #94a3b8; }
+  .judge-row.needs-hand { background: #fff7ed; border-left: 3px solid #fb923c; padding-left: 6px; }
+  .rule-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .accept-rule { padding: 1px 8px; font-size: 11px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
 
   /* progress view */
   .prog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -180,7 +196,7 @@ const api = {
 };
 
 const state = {
-  samples: [], annotations: [], suggestions: [], patterns: {}, graph: {nodes: [], clusters: []}, scenarios: {},
+  samples: [], annotations: [], suggestions: [], patterns: {}, graph: {nodes: [], clusters: []}, scenarios: {}, labels: {}, audit: new Set(),
   view: 'trace', idx: 0, pendingQuote: null,
 };
 
@@ -244,10 +260,12 @@ function normalizePatterns(p) {
 }
 
 async function load() {
-  const [samples, annotations, suggestions, patterns, graph, scenarios] = await Promise.all([
+  const [samples, annotations, suggestions, patterns, graph, scenarios, labels] = await Promise.all([
     api.get('/api/samples'), api.get('/api/annotations'), api.get('/api/suggestions'),
-    api.get('/api/patterns'), api.get('/api/graph'), api.get('/api/scenarios'),
+    api.get('/api/patterns'), api.get('/api/graph'), api.get('/api/scenarios'), api.get('/api/labels'),
   ]);
+  state.labels = labels && typeof labels === 'object' ? labels : {};
+  try { const au = await api.get('/api/audit'); state.audit = new Set(((au && au.cells) || []).map(c => `${c.trace_id}|${c.mode}`)); } catch (e) {}
   state.samples = (Array.isArray(samples) ? samples : []).map(deepFixText);
   state.annotations = asAnnotationList(annotations);
   state.suggestions = Array.isArray(suggestions) ? suggestions : [];
@@ -272,10 +290,11 @@ function renderTopbar() {
   document.getElementById('counter').textContent = total ? `${state.idx + 1} / ${total}` : '0 / 0';
   document.getElementById('prev').disabled = state.idx <= 0;
   document.getElementById('next').disabled = state.idx >= total - 1;
-  const annotatedTraces = new Set(state.annotations.map(a => a.trace_id)).size;
-  const notes = state.annotations.length;
-  document.getElementById('stats').textContent =
-    `${annotatedTraces} / ${total} traces annotated, ${notes} note${notes === 1 ? '' : 's'}`;
+  const annotatedTraces = new Set(state.annotations.filter(a => !a.mode).map(a => a.trace_id)).size;
+  const need = normalizePatterns(state.patterns).length;
+  const handLeft = state.samples.reduce((n, s) => n + handCount(s), 0);
+  document.getElementById('stats').innerHTML =
+    `${annotatedTraces} / ${total} noted &middot; <b style="color:#b45309">${handLeft} cells to check</b>`;
 }
 
 // ---- trace view ----
@@ -424,74 +443,231 @@ function onSelectText(ev) {
   renderMargin();
 }
 
+// Code-check hints: cheap deterministic signals for the four modes a program
+// can check. They are retrieval signals for the reviewer, never labels.
+function codeHints(sample) {
+  const trace = sample.trace || [];
+  const hints = [];
+  const asstText = trace.filter(m => m.role === 'assistant').map(m => m.text || '').join('\n');
+  const parsed = c => { if (typeof c !== 'string') return c; try { return JSON.parse(c); } catch (e) { return null; } };
+
+  const ids = [...new Set(asstText.match(/\bcw-[a-z]+(?:-[a-z]+)*\b/g) || [])];
+  if (ids.length) hints.push({mode: 'internal_policy_id_shown', why: `reply contains ${ids.join(', ')}`});
+
+  const fmt = [];
+  if (asstText.includes('**')) fmt.push('**');
+  if (/\|\s*-{3,}/.test(asstText)) fmt.push('pipe table');
+  if (/\p{Extended_Pictographic}/u.test(asstText)) fmt.push('emoji');
+  if (fmt.length) hints.push({mode: 'unprofessional_style', why: `reply contains ${fmt.join(', ')}`});
+
+  const rejected = trace.filter(m => m.role === 'tool_result').map(m => ({name: m.name, c: parsed(m.content)}))
+    .filter(r => r.c && r.c.ok === false && ['not_found', 'invalid_argument'].includes(r.c.error));
+  if (rejected.length) hints.push({mode: 'rejected_tool_argument',
+    why: `${rejected.length} tool result(s) rejected: ${rejected.map(r => `${r.name} ${r.c.error}`).join('; ')}`});
+
+  const calls = trace.filter(m => m.role === 'tool_call');
+  const seen = new Set(); const dup = [];
+  for (const c of calls) {
+    const k = `${c.name}|${JSON.stringify(c.arguments)}`;
+    if (seen.has(k)) dup.push(c.name); else seen.add(k);
+  }
+  const searched = new Set();
+  trace.forEach(m => {
+    if (m.role === 'tool_result' && m.name === 'search_help_center') {
+      const c = parsed(m.content);
+      ((c && c.results) || []).forEach(r => searched.add(r.policy_id));
+    }
+  });
+  const refetch = calls.filter(c => c.name === 'get_policy' && c.arguments && searched.has(c.arguments.policy_id))
+    .map(c => c.arguments.policy_id);
+  if (dup.length || refetch.length) {
+    const bits = [];
+    if (dup.length) bits.push(`repeated call: ${[...new Set(dup)].join(', ')}`);
+    if (refetch.length) bits.push(`get_policy for ${[...new Set(refetch)].join(', ')} after search already returned it`);
+    hints.push({mode: 'redundant_tool_call', why: bits.join('; ')});
+  }
+  return hints;
+}
+
+// ---- rule proposals: what a code rule would decide. Never saved until the reviewer accepts. ----
+
+function orderProblems(sample) {
+  const out = [];
+  (sample.trace || []).forEach(m => {
+    if (m.role !== 'tool_result') return;
+    let c = m.content;
+    if (typeof c === 'string') { try { c = JSON.parse(c); } catch (e) { c = null; } }
+    const o = c && c.order;
+    if (!o) return;
+    if (o.status === 'delivered' && !o.delivered_at) out.push(`order ${o.order_id}: status delivered but no delivery date`);
+    if (o.delivered_at && o.shipped_at && o.delivered_at < o.shipped_at) out.push(`order ${o.order_id}: delivered before shipped`);
+  });
+  return out;
+}
+
+function ruleFor(mode, sample) {
+  const hints = {};
+  codeHints(sample).forEach(h => { hints[h.mode] = h.why; });
+  if (mode === 'internal_policy_id_shown')
+    return hints[mode] ? {value: 1, why: `rule: ${hints[mode]}`} : {value: 0, why: 'rule: no policy ID in any reply'};
+  if (mode === 'rejected_tool_argument')
+    return hints[mode] ? {value: 1, why: `rule: ${hints[mode]}`} : {value: 0, why: 'rule: no tool rejected an argument'};
+  if ((mode === 'unprofessional_style' || mode === 'redundant_tool_call') && hints[mode])
+    return {value: 1, why: `rule: ${hints[mode]}`};
+  if (mode === 'persona_not_clarified') {
+    const role = sample.meta && sample.meta.role;
+    return role === 'shopper' ? {value: 0, why: 'rule: shopper session, so no capacity mix-up is possible'} : null;
+  }
+  if (mode === 'missing_data_not_flagged') {
+    const probs = orderProblems(sample);
+    return probs.length ? null : {value: 0, why: 'rule: no missing or contradictory data in any order record shown'};
+  }
+  return null;
+}
+
+function needsHand(mode, sample) {
+  return labelOf(mode, sample.trace_id) === null && !ruleFor(mode, sample);
+}
+
+async function acceptRule(mode, sample) {
+  const r = ruleFor(mode, sample);
+  if (!r) return;
+  const evidence = `${r.why} (accepted by reviewer)`;
+  state.labels[mode] = state.labels[mode] || {};
+  state.labels[mode][sample.trace_id] = {label: r.value, evidence};
+  await api.post('/api/labels', {trace_id: sample.trace_id, mode, label: r.value, evidence});
+}
+
+async function approveAllRules() {
+  const modes = normalizePatterns(state.patterns);
+  const todo = [];
+  state.samples.forEach(s => modes.forEach(m => {
+    if (labelOf(m.name, s.trace_id) === null && ruleFor(m.name, s)) todo.push([m.name, s]);
+  }));
+  if (!todo.length) { alert('Nothing left for the rules to propose.'); return; }
+  if (!confirm(`Accept ${todo.length} rule-proposed judgments as your own?\n\nDo this only after spot-checking a few traces.`)) return;
+  for (const [mode, s] of todo) await acceptRule(mode, s);
+  renderAll();
+}
+
+// ---- judgments (Part E): one row per mode, saved to analysis/state/labels/ ----
+
+function labelOf(mode, traceId) {
+  const row = (state.labels[mode] || {})[traceId];
+  return row ? row.label : null;
+}
+
+async function setLabel(mode, label, evidence) {
+  const sample = state.samples[state.idx];
+  const tid = sample.trace_id;
+  state.labels[mode] = state.labels[mode] || {};
+  if (label === null) delete state.labels[mode][tid];
+  else state.labels[mode][tid] = {label, evidence: evidence || ''};
+  await api.post('/api/labels', {trace_id: tid, mode, label, evidence: evidence || ''});
+}
+
+function judgedCount(traceId) {
+  return normalizePatterns(state.patterns).filter(m => labelOf(m.name, traceId) !== null).length;
+}
+
+function isAudit(mode, traceId) { return state.audit.has(`${traceId}|${mode}`); }
+
+function handCount(sample) {
+  return normalizePatterns(state.patterns).filter(m => needsHand(m.name, sample) && isAudit(m.name, sample.trace_id)).length;
+}
+
+function nextToJudge() {
+  const total = state.samples.length;
+  for (let step = 1; step <= total; step++) {
+    const i = (state.idx + step) % total;
+    if (handCount(state.samples[i]) > 0) return i;
+  }
+  return -1;
+}
+
 function renderMargin() {
   const el = document.getElementById('margin');
   if (!el) return;
   const sample = state.samples[state.idx];
+  const tid = sample.trace_id;
   const modes = normalizePatterns(state.patterns);
-  // The mode + present/absent controls are Part E's structured-labeling
-  // step, which only makes sense once a taxonomy exists (Part D). Before
-  // that, show plain note-taking only — no dead controls.
-  const modeOptions = modes.map(m => `<option value="${escape(m.name)}">${escape(m.name)}</option>`).join('');
-  const modeControls = modes.length
-    ? `<select id="__MODE_ID__">${modeOptions}</select>` +
-      `<div class="row"><button data-label="1">Mark present</button><button data-label="0">Mark absent</button></div>`
-    : '';
+  const hintByMode = {};
+  codeHints(sample).forEach(h => { hintByMode[h.mode] = h.why; });
 
-  let compose = '';
-  if (state.pendingQuote) {
-    compose = `<div class="card compose">` +
-      `<div class="quote">"${escape(state.pendingQuote.text)}"</div>` +
-      `<textarea id="note-text" placeholder="What's happening here?"></textarea>` +
-      modeControls.replace('__MODE_ID__', 'note-mode') +
-      `<div class="row"><button class="primary" id="save-note">Save note</button><button id="cancel-note">Cancel</button></div>` +
-    `</div>`;
-  } else {
-    compose = `<div class="card compose">` +
-      `<div class="hint" style="margin-bottom:6px">Select any text above to quote it, or write a general note below.</div>` +
-      `<textarea id="general-note-text" placeholder="General note about this trace..."></textarea>` +
-      modeControls.replace('__MODE_ID__', 'general-note-mode') +
-      `<div class="row"><button class="primary" id="general-save">Save note</button></div>` +
-    `</div>`;
-  }
+  const quoteHtml = state.pendingQuote ? `<div class="quote">"${escape(state.pendingQuote.text)}"</div>` : '';
+  const noteCard = `<div class="card compose">` +
+    `<b style="font-size:12px">1. Write a note</b>` +
+    `<div class="hint" style="margin:4px 0 8px">${state.pendingQuote ? 'About the text you selected.' : 'Describe what you saw. Select text above to quote it. A note does not label anything.'}</div>` +
+    quoteHtml +
+    `<textarea id="note-text" placeholder="What happened? (a statement, not a question)"></textarea>` +
+    `<div class="row"><button class="primary" id="save-note">Save note</button>` +
+    (state.pendingQuote ? `<button id="cancel-note">Cancel</button>` : '') + `</div></div>`;
 
-  const alreadyReviewed = state.annotations.some(a => a.trace_id === sample.trace_id);
-  const noFailureBlock = `<div class="card">` +
-    `<button id="no-failure-btn" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--line); background:#fff;">` +
-    `${alreadyReviewed ? 'Already has notes' : 'No failure observed'}</button>` +
-    `<div class="hint" style="margin-top:6px">Per Part B: read until the first failure and stop; if there truly isn't one, record that explicitly so this trace counts as reviewed.</div></div>`;
+  const done = judgedCount(tid);
+  const rows = modes.map(m => {
+    const cur = labelOf(m.name, tid);
+    const hint = hintByMode[m.name];
+    const rule = cur === null ? ruleFor(m.name, sample) : null;
+    const hand = cur === null && !rule && isAudit(m.name, tid);
+    const open = cur === null && !rule && !hand;
+    const btn = (val, text) => `<button class="seg ${cur === val ? 'on-' + val : ''}" data-mode="${escape(m.name)}" data-val="${val}">${text}</button>`;
+    return `<div class="judge-row ${hand ? 'needs-hand' : ''}"><div class="judge-name" title="${escape(m.definition || '')}">${escape(m.name)}` +
+      `${m.status === 'candidate' ? ' <span class="hint">(candidate)</span>' : ''}` +
+      (hand ? ' <span class="tag tag-hand">CHECK THIS</span>' : '') +
+      (open ? ' <span class="tag tag-rule">not in your sample</span>' : '') + `</div>` +
+      `<div class="seg-group">${btn(1, 'Present')}${btn(0, 'Absent')}</div>` +
+      (rule ? `<div class="hint judge-hint rule-line"><span class="tag tag-rule">rule proposes ${rule.value === 1 ? 'Present' : 'Absent'}</span> ${escape(rule.why.replace(/^rule: /, ''))} ` +
+        `<button class="accept-rule" data-mode="${escape(m.name)}">Accept</button></div>` : '') +
+      (hand && hint ? `<div class="hint judge-hint">auto-check: ${escape(hint)}</div>` : '') +
+      (cur === null ? '' : `<div class="hint judge-hint">${cur === 1 ? 'Present' : 'Absent'} \u2014 click again to clear</div>`) + `</div>`;
+  }).join('');
+  const judgeCard = `<div class="card">` +
+    `<b style="font-size:12px">2. Judge each failure mode</b>` +
+    `<div class="hint" style="margin:4px 0 8px">Is this failure in this trace? Click Present or Absent. Hover a name for its definition.<br>` +
+    `<b>${done}</b> of ${modes.length} judged &middot; <b style="color:#b45309">${handCount(sample)} to check</b> &middot; ${modes.filter(m => labelOf(m.name, tid) === null && ruleFor(m.name, sample)).length} rule-proposed</div>` +
+    rows +
+    `<div class="row" style="margin-top:8px"><button id="accept-all-rules">Accept all rule proposals on this trace</button></div>` +
+    `<div class="row"><button id="all-absent">No failure: mark unjudged Absent</button></div>` +
+    `<div class="row"><button id="next-judge">Next trace with a cell to check &rarr;</button></div></div>`;
 
-  const notes = state.annotations.filter(a => a.trace_id === sample.trace_id)
+  const notes = state.annotations.filter(a => a.trace_id === tid && !a.mode)
     .slice().sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
   const notesHtml = notes.length
     ? notes.map(a => `<div class="note-item" data-id="${escape(a.id)}">` +
         (a.quote ? `<div class="quote">"${escape(a.quote)}"</div>` : '') +
         `<div>${escape(a.note || '')}</div>` +
-        `<div class="meta"><span>${a.mode ? `<span class="label-pill ${a.label == 1 ? 'present' : 'absent'}">${escape(a.mode)}: ${a.label == 1 ? 'present' : 'absent'}</span>` : ''}</span>` +
-        `<button class="del" data-id="${escape(a.id)}">delete</button></div></div>`).join('')
+        `<div class="meta"><span></span><button class="del" data-id="${escape(a.id)}">delete</button></div></div>`).join('')
     : `<div class="hint">No notes on this trace yet.</div>`;
 
-  el.innerHTML = noFailureBlock + compose + `<div class="card"><b style="font-size:12px">Notes on this trace</b><div style="margin-top:8px">${notesHtml}</div></div>`;
+  el.innerHTML = noteCard + judgeCard + `<div class="card"><b style="font-size:12px">Notes on this trace</b><div style="margin-top:8px">${notesHtml}</div></div>`;
 
-  const noFailureBtn = document.getElementById('no-failure-btn');
-  if (noFailureBtn && !alreadyReviewed) {
-    noFailureBtn.addEventListener('click', () => saveAnnotation('', 'no failure observed', null, null));
-  } else if (noFailureBtn) {
-    noFailureBtn.disabled = true;
-  }
-
-  const noteTextId = state.pendingQuote ? 'note-text' : 'general-note-text';
-  const modeSelId = state.pendingQuote ? 'note-mode' : 'general-note-mode';
   const quoteText = state.pendingQuote ? state.pendingQuote.text : null;
-  const modeValue = () => { const sel = document.getElementById(modeSelId); return sel ? sel.value : null; };
+  document.getElementById('save-note').addEventListener('click', () => saveAnnotation('', document.getElementById('note-text').value, null, quoteText));
+  const cancel = document.getElementById('cancel-note');
+  if (cancel) cancel.addEventListener('click', () => { state.pendingQuote = null; renderMargin(); });
 
-  if (state.pendingQuote) {
-    document.getElementById('cancel-note').addEventListener('click', () => { state.pendingQuote = null; renderMargin(); });
-  }
-  const saveBtn = document.getElementById(state.pendingQuote ? 'save-note' : 'general-save');
-  if (saveBtn) saveBtn.addEventListener('click', () => saveAnnotation('', document.getElementById(noteTextId).value, modeValue(), quoteText));
-  el.querySelectorAll('.row button[data-label]').forEach(btn => {
-    btn.addEventListener('click', () => saveAnnotation(btn.dataset.label, document.getElementById(noteTextId).value, modeValue(), quoteText));
+  el.querySelectorAll('.seg').forEach(b => b.addEventListener('click', async () => {
+    const mode = b.dataset.mode, val = Number(b.dataset.val);
+    const cur = labelOf(mode, tid);
+    await setLabel(mode, cur === val ? null : val);
+    renderMargin(); renderTopbar();
+  }));
+  document.getElementById('all-absent').addEventListener('click', async () => {
+    for (const m of modes) if (labelOf(m.name, tid) === null) await setLabel(m.name, 0, 'no failure observed');
+    if (!state.annotations.some(a => a.trace_id === tid)) saveAnnotation('', 'no failure observed', null, null);
+    renderMargin(); renderTopbar();
+  });
+  document.getElementById('accept-all-rules').addEventListener('click', async () => {
+    for (const m of modes) if (labelOf(m.name, tid) === null) await acceptRule(m.name, sample);
+    renderMargin(); renderTopbar();
+  });
+  el.querySelectorAll('.accept-rule').forEach(b => b.addEventListener('click', async () => {
+    await acceptRule(b.dataset.mode, sample); renderMargin(); renderTopbar();
+  }));
+  document.getElementById('next-judge').addEventListener('click', () => {
+    const i = nextToJudge();
+    if (i < 0) { alert('Every cell in your sample has been judged. Rule proposals may still be waiting (see the Progress tab).'); return; }
+    state.idx = i; state.pendingQuote = null; renderAll();
   });
   el.querySelectorAll('.del').forEach(btn => btn.addEventListener('click', () => deleteAnnotation(btn.dataset.id)));
 }
@@ -568,7 +744,7 @@ function renderProgress() {
 
   const modeBlocks = modes.length
     ? modes.map(m => {
-        const rows = state.annotations.filter(a => a.mode === m.name && (a.label === 0 || a.label === 1));
+        const rows = Object.values(state.labels[m.name] || {});
         const present = rows.filter(r => r.label === 1).length;
         const absent = rows.filter(r => r.label === 0).length;
         return `<div class="mode-block"><h3>${escape(m.name)}<span class="counts">${present} present / ${absent} absent</span></h3>` +
@@ -578,25 +754,35 @@ function renderProgress() {
 
   const gridRows = state.samples.map(s => {
     const cells = modes.map(m => {
-      const rows = state.annotations.filter(a => a.trace_id === s.trace_id && a.mode === m.name && (a.label === 0 || a.label === 1));
-      const last = rows[rows.length - 1];
-      if (!last) return '<td>–</td>';
-      return `<td style="color:${last.label === 1 ? 'var(--bad)' : 'var(--good)'}">${last.label === 1 ? '✓' : '✗'}</td>`;
+      const cur = labelOf(m.name, s.trace_id);
+      if (cur === null) return ruleFor(m.name, s) ? '<td style="color:var(--muted)" title="a rule proposes a value; accept it in the trace view or with Approve all">rule</td>'
+        : (isAudit(m.name, s.trace_id)
+            ? '<td style="background:#fff7ed; color:#b45309; font-weight:700" title="in your 10% sample: please judge">CHECK</td>'
+            : '<td style="color:#cbd5e1" title="unjudged, not in your sample">open</td>');
+      return `<td style="color:${cur === 1 ? 'var(--bad)' : 'var(--good)'}">${cur === 1 ? 'Present' : 'Absent'}</td>`;
     }).join('');
     const noteCount = state.annotations.filter(a => a.trace_id === s.trace_id).length;
     return `<tr data-id="${escape(s.trace_id)}"><td>${escape(s.trace_id)}</td><td>${noteCount}</td>${cells}</tr>`;
   }).join('');
 
-  const suggRows = state.suggestions.length
-    ? state.suggestions.map((s, i) => `<div class="sugg-row" data-i="${i}">` +
-        `<span class="mode">${escape(s.mode || '')}</span><span class="quote">"${escape(s.quote || '')}" &middot; ${escape(s.trace_id || '')}</span>` +
-        `<button data-action="accept" data-i="${i}">Accept</button><button data-action="reject" data-i="${i}">Reject</button></div>`).join('')
-    : `<div class="hint">No pending suggestions.</div>`;
+  const pending = state.suggestions.filter(s => !s.status || s.status === 'pending');
+  const decided = state.suggestions.length - pending.length;
+  const suggRows = (pending.length
+    ? pending.map(s => `<div class="sugg-row">` +
+        `<span class="mode">${escape(s.mode || '')}</span>` +
+        `<span class="quote">${escape(s.reason || s.quote || '')} &middot; ${escape(s.scenario_id || s.trace_id || '')}</span>` +
+        `<button data-action="open" data-id="${escape(s.id)}">Open</button>` +
+        `<button data-action="accept" data-id="${escape(s.id)}">Accept</button>` +
+        `<button data-action="reject" data-id="${escape(s.id)}">Reject</button></div>`).join('')
+    : `<div class="hint">No pending suggestions.</div>`) +
+    `<div class="hint" style="margin-top:8px">${decided} decided (kept in the saved state). Accept = this trace is a positive for the mode; Reject = it is not.</div>`;
 
   el.innerHTML = `<div class="prog-grid">` +
     `<div class="card">` +
       `<b>Overall progress</b>` +
       `<div class="hint" style="margin:8px 0">${annotatedTraces} / ${total} traces have at least one note (${pct}%)</div>` +
+      `<div style="margin:8px 0"><button id="approve-rules" style="padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#0f172a; color:#fff;">Approve all rule-proposed judgments</button>` +
+      `<div class="hint" style="margin-top:4px">Grey "rule" cells are proposals; orange "CHECK" cells are your 10% sample; pale "open" cells are unjudged and not sampled.</div></div>` +
       `<b style="font-size:12px">Failure mode taxonomy</b>` +
       `<div style="margin-top:8px">${modeBlocks}</div>` +
       `<div class="add-mode">` +
@@ -621,7 +807,8 @@ function renderProgress() {
     if (i >= 0) { state.idx = i; state.view = 'trace'; renderAll(); }
   }));
   document.getElementById('add-mode-btn').addEventListener('click', addMode);
-  el.querySelectorAll('.sugg-row button').forEach(btn => btn.addEventListener('click', () => handleSuggestion(Number(btn.dataset.i), btn.dataset.action)));
+  document.getElementById('approve-rules').addEventListener('click', approveAllRules);
+  el.querySelectorAll('.sugg-row button').forEach(btn => btn.addEventListener('click', () => handleSuggestion(btn.dataset.id, btn.dataset.action)));
 }
 
 async function addMode() {
@@ -635,17 +822,30 @@ async function addMode() {
   renderProgress();
 }
 
-async function handleSuggestion(i, action) {
-  const s = state.suggestions[i];
-  if (action === 'accept') {
-    state.annotations.push({
-      id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      trace_id: s.trace_id, quote: s.quote || null, note: `[accepted suggestion] ${s.mode || ''}`,
-      mode: s.mode || null, label: 1, source: 'accepted_suggestion', ts: new Date().toISOString(),
-    });
-    await persistAnnotations();
+async function handleSuggestion(id, action) {
+  const s = state.suggestions.find(x => x.id === id);
+  if (!s) return;
+  if (action === 'open') {
+    const i = state.samples.findIndex(x => x.trace_id === s.trace_id);
+    if (i >= 0) { state.idx = i; state.view = 'trace'; renderAll(); }
+    return;
   }
-  state.suggestions = state.suggestions.filter((_, idx) => idx !== i);
+  const accepted = action === 'accept';
+  s.status = accepted ? 'accepted' : 'rejected';
+  s.decided_at = new Date().toISOString();
+  state.annotations.push({
+    id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    trace_id: s.trace_id, scenario_id: s.scenario_id || null, quote: s.quote || null,
+    note: `[${s.status} suggestion] ${s.mode || ''}`,
+    mode: s.mode || null, label: accepted ? 1 : 0,
+    source: `${s.status}_suggestion`, ts: s.decided_at,
+  });
+  await persistAnnotations();
+  if (s.mode) {
+    state.labels[s.mode] = state.labels[s.mode] || {};
+    state.labels[s.mode][s.trace_id] = {label: accepted ? 1 : 0, evidence: `${s.status} suggestion`};
+    await api.post('/api/labels', {trace_id: s.trace_id, mode: s.mode, label: accepted ? 1 : 0, evidence: `${s.status} suggestion`});
+  }
   await api.post('/api/suggestions', state.suggestions);
   renderProgress();
   renderTopbar();
@@ -663,7 +863,11 @@ function renderAll() {
   else renderProgress();
 }
 
-document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { state.view = b.dataset.view; state.pendingQuote = null; renderAll(); }));
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', async () => {
+  state.view = b.dataset.view; state.pendingQuote = null;
+  if (state.view === 'progress') { try { state.labels = await api.get('/api/labels'); } catch (e) {} }
+  renderAll();
+}));
 document.getElementById('prev').addEventListener('click', () => { if (state.idx > 0) { state.idx--; state.pendingQuote = null; renderAll(); } });
 document.getElementById('next').addEventListener('click', () => { if (state.idx < state.samples.length - 1) { state.idx++; state.pendingQuote = null; renderAll(); } });
 

@@ -1,0 +1,248 @@
+{
+  "note": "The coding agent's own Present(1)/Absent(0) judgments for the 32 audit cells, written BEFORE viewing the reviewer's answers, from the trace text and mode definitions in patterns.json.",
+  "judgments": [
+    {
+      "position": 4,
+      "mode": "redundant_tool_call",
+      "value": 0,
+      "why": "The second and third calls are retries after a rejected argument, not repeats of an answer already held."
+    },
+    {
+      "position": 9,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "Directly says the order shipped, so cancellation is unavailable."
+    },
+    {
+      "position": 16,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "Offers, then completes the refund the user asked for."
+    },
+    {
+      "position": 19,
+      "mode": "missing_data_not_flagged",
+      "value": 1,
+      "why": "Record has delivered before shipped; the reply escalates but never states the contradiction."
+    },
+    {
+      "position": 24,
+      "mode": "persona_not_clarified",
+      "value": 1,
+      "why": "Merchant session in shopper voice; agent assumed the wrong capacity and refused, never asked."
+    },
+    {
+      "position": 24,
+      "mode": "redundant_tool_call",
+      "value": 0,
+      "why": "One get_order call only."
+    },
+    {
+      "position": 24,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "Handling was inconsistent, but that is a persona issue, not a missing answer."
+    },
+    {
+      "position": 27,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "Answers the policy question and completes the later refund."
+    },
+    {
+      "position": 29,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Recap of order details before the confirming question."
+    },
+    {
+      "position": 30,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Eight-row table plus closing filler for a status question."
+    },
+    {
+      "position": 35,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "Completes the requested refund and explains next steps."
+    },
+    {
+      "position": 42,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Apology and extra guidance around a one-line denial."
+    },
+    {
+      "position": 45,
+      "mode": "unprofessional_style",
+      "value": 1,
+      "why": "Opens with an apology."
+    },
+    {
+      "position": 46,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Closing filler and a padded second reply."
+    },
+    {
+      "position": 49,
+      "mode": "redundant_tool_call",
+      "value": 1,
+      "why": "Help-center search after the refund; the refund result already gave the timeline."
+    },
+    {
+      "position": 51,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "No explicit question; the order details were provided."
+    },
+    {
+      "position": 52,
+      "mode": "persona_not_clarified",
+      "value": 0,
+      "why": "Support session in in-role voice."
+    },
+    {
+      "position": 53,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "Status answered."
+    },
+    {
+      "position": 56,
+      "mode": "persona_not_clarified",
+      "value": 0,
+      "why": "Support session in in-role voice."
+    },
+    {
+      "position": 56,
+      "mode": "redundant_tool_call",
+      "value": 0,
+      "why": "One get_order call only."
+    },
+    {
+      "position": 57,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "Status answered."
+    },
+    {
+      "position": 58,
+      "mode": "persona_not_clarified",
+      "value": 0,
+      "why": "Support session in in-role voice."
+    },
+    {
+      "position": 60,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Table, unrequested eligibility line, closing filler."
+    },
+    {
+      "position": 64,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Table plus closing filler."
+    },
+    {
+      "position": 66,
+      "mode": "redundant_tool_call",
+      "value": 0,
+      "why": "One get_order call only."
+    },
+    {
+      "position": 66,
+      "mode": "reply_misses_the_ask",
+      "value": 0,
+      "why": "The missing flag belongs to missing_data_not_flagged."
+    },
+    {
+      "position": 67,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Full table plus extra notes and a closing question."
+    },
+    {
+      "position": 72,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Closing filler after a ticket confirmation."
+    },
+    {
+      "position": 82,
+      "mode": "redundant_tool_call",
+      "value": 0,
+      "why": "No tool calls."
+    },
+    {
+      "position": 84,
+      "mode": "verbose_reply",
+      "value": 0,
+      "why": "Short; explains the limitation and asks for the name."
+    },
+    {
+      "position": 87,
+      "mode": "redundant_tool_call",
+      "value": 0,
+      "why": "Policy lookup was used to explain the payment effect."
+    },
+    {
+      "position": 89,
+      "mode": "verbose_reply",
+      "value": 1,
+      "why": "Table, unrequested eligibility line and closing filler."
+    }
+  ],
+  "comparison": {
+    "compared_at": "2026-09-20T16:56:51.210419+00:00",
+    "blind_agreement": "22 of 32 (69%) before any discussion",
+    "per_mode_blind": {
+      "verbose_reply": "5/10",
+      "reply_misses_the_ask": "7/9",
+      "redundant_tool_call": "6/7",
+      "persona_not_clarified": "3/4",
+      "unprofessional_style": "1/1",
+      "missing_data_not_flagged": "0/1"
+    },
+    "main_finding": "Most disagreements were on verbose_reply: the reviewer accepts extra data in merchant/support replies (saves a tool call). The agent applied one standard to all roles.",
+    "reconciliation": "After discussion the reviewer flipped verbose_reply to Present on positions 42, 60, 89 (filler/apology still counts). Agreement after reconciliation is 25 of 32 (78%) but is NOT independent of the discussion.",
+    "remaining_disagreements": [
+      [
+        4,
+        "redundant_tool_call",
+        "reviewer Present"
+      ],
+      [
+        16,
+        "reply_misses_the_ask",
+        "reviewer Present"
+      ],
+      [
+        19,
+        "missing_data_not_flagged",
+        "reviewer Absent"
+      ],
+      [
+        24,
+        "persona_not_clarified",
+        "reviewer Absent (no consequential action)"
+      ],
+      [
+        24,
+        "reply_misses_the_ask",
+        "reviewer Present"
+      ],
+      [
+        67,
+        "verbose_reply",
+        "reviewer Absent (extra data fine for support)"
+      ],
+      [
+        72,
+        "verbose_reply",
+        "reviewer Absent"
+      ]
+    ]
+  }
+}

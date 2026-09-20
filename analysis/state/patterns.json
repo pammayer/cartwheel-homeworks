@@ -2,7 +2,7 @@
   "modes": [
     {
       "name": "verbose_reply",
-      "definition": "The reply contains content the request did not need: data recaps, repeated sentences, a recap turn before the needed question, or closing filler.",
+      "definition": "The reply contains content the request did not need: data recaps, repeated sentences, a recap turn before the needed question, or closing filler. For merchant and support sessions, extra order data is acceptable because it saves a follow-up lookup; filler, apologies and repeated sentences still count.",
       "status": "draft",
       "count": 3,
       "example_trace_ids": [
@@ -23,7 +23,8 @@
       ],
       "boundary": "Extra tool calls belong to redundant_tool_call; markup belongs to formatting_noise.",
       "evaluator_type": "llm_judge",
-      "requirement_source": "RESP-5 (loose); new concision requirement needed"
+      "requirement_source": "RESP-7 (HW4 revision to SPEC.md); loosely RESP-5",
+      "revision_note": "Reviewer rule from the 10% audit: extra data is fine for merchant/support sessions (it saves a tool call); filler, apologies and repeats still count."
     },
     {
       "name": "redundant_tool_call",
@@ -49,21 +50,28 @@
       ],
       "boundary": "A call that errors belongs to rejected_tool_argument.",
       "evaluator_type": "code_check_plus_llm_judge",
-      "requirement_source": "none; new requirement needed"
+      "requirement_source": "RESP-10 (HW4 revision to SPEC.md)"
     },
     {
       "name": "internal_policy_id_shown",
       "definition": "The reply shows an internal policy identifier (for example cw-refunds) to the user.",
       "status": "draft",
-      "count": 3,
+      "count": 7,
       "example_trace_ids": [
         "36ed333695bbd05e703a542b258ac0d0",
         "abed00ec5700865b093b54a799f3aec7",
-        "b8ab0b98d5e7ac225cf2872c6d7ecbc4"
+        "b8ab0b98d5e7ac225cf2872c6d7ecbc4",
+        "5a69a73ac13a285013272a967c633c30",
+        "48c22f8507ba0b6a43e7182c60b11535",
+        "3f0b1eae59205bd5460afdc318139067",
+        "c3c89ac9b67eff02f6802db006d42353"
       ],
       "close_negative_trace_ids": [
         "303aa115ab04e758380a5f7c81b32f98",
-        "db47a50902a8c12df9fa69e55230fdf1"
+        "db47a50902a8c12df9fa69e55230fdf1",
+        "b4e408c135ea3700110d3121fd6e5154",
+        "b390c2be8fa9ea16fb800518b500b666",
+        "17282a6476bb6a7e1d643dd9afde8238"
       ],
       "origin_annotation_ids": [
         "ann-1789784040012-a0pen",
@@ -72,70 +80,27 @@
       ],
       "boundary": "Naming the policy by its plain-language title is the wanted form and is not this mode.",
       "evaluator_type": "code_check",
-      "requirement_source": "revised RESP-1 plus new RESP-6 (plain-language citations)"
-    },
-    {
-      "name": "formatting_noise",
-      "definition": "The reply uses double asterisks, pipe tables, emoji, or an inconsistent label/date layout.",
-      "status": "draft",
-      "count": 3,
-      "example_trace_ids": [
-        "07c842c26cd8a0bf03ff6f985d5fc336",
-        "6859196e302f509f4a87318c074c90fd",
-        "2622fa8de6e0ac7c45a215fc5049bed0"
-      ],
-      "close_negative_trace_ids": [
-        "6c4abe2bd10f9fb3eacc461380513041",
-        "131bf25c233cbd43087604a174e88150",
-        "b536da88a7c1693b664a64533c0e8ad9"
-      ],
-      "origin_annotation_ids": [
-        "ann-1789828675902-oqfyo",
-        "ann-1789831887320-s5rjr",
-        "ann-1789834101930-zkq3t"
-      ],
-      "boundary": "Apology or gushing tone belongs to tone_off; emoji count here only as markup.",
-      "evaluator_type": "code_check_plus_llm_judge",
-      "requirement_source": "none; new requirement needed"
-    },
-    {
-      "name": "tone_off",
-      "definition": "The reply apologizes, gushes (for example \"Great news!\"), or claims feelings.",
-      "status": "draft",
-      "count": 3,
-      "example_trace_ids": [
-        "b8ab0b98d5e7ac225cf2872c6d7ecbc4",
-        "c4de09d9569488e337f32051f0bfff13",
-        "131bf25c233cbd43087604a174e88150"
-      ],
-      "close_negative_trace_ids": [
-        "6c4abe2bd10f9fb3eacc461380513041",
-        "ebe170e7f88de5a6bc34d5561317c7eb",
-        "e156d45073ec9314b65bf150edd789d9"
-      ],
-      "origin_annotation_ids": [
-        "ann-1789829229264-k66f6",
-        "ann-1789830571369-p0ga8",
-        "ann-1789833388828-mw2p9"
-      ],
-      "boundary": "Length belongs to verbose_reply.",
-      "evaluator_type": "llm_judge",
-      "requirement_source": "RESP-5 (loose); revision may be needed"
+      "requirement_source": "RESP-1 (revised in HW4: cite by plain-language title, never by internal identifier)",
+      "revision_note": "Negatives are rare: 98 of about 102 policy replies show an ID. #46 (confirmed) states the $100 rule in plain words; #71 and #72 are dispute-ticket confirmations with no ID."
     },
     {
       "name": "rejected_tool_argument",
       "definition": "An agent-supplied tool argument is in a form the tool rejects (not_found or invalid_argument), for example a numeric store id where a store name is required.",
       "status": "draft",
-      "count": 3,
+      "count": 4,
       "example_trace_ids": [
         "4b007c286fc3e175cf3b6ccfb3f020f2",
         "4cd5ee3add28bc2e303171a97a9e245c",
-        "4171307f07ef4dbc0b27d5a6a37ad8e0"
+        "4171307f07ef4dbc0b27d5a6a37ad8e0",
+        "a35588e19cc0a51dd071cedd46c5954c"
       ],
       "close_negative_trace_ids": [
         "c4fba194fcdeb9ae00f06e766dcebdaa",
         "8fd3d03ef74e73e242d5c127139cd4e6",
-        "cbcf765326b9bc88a2c1b657cdeaf746"
+        "cbcf765326b9bc88a2c1b657cdeaf746",
+        "8fac5880ff66217f3f2a3052ef471da3",
+        "2f2006ecdfb6a07eba43115e56d1ae85",
+        "e3e14a25b3d1fa48e4368e8550ef87bf"
       ],
       "origin_annotation_ids": [
         "ann-1789828322367-i8ohv",
@@ -144,23 +109,63 @@
       ],
       "boundary": "A permission denial is expected behavior, not this mode.",
       "evaluator_type": "code_check",
-      "requirement_source": "none; new requirement needed"
+      "requirement_source": "RESP-10 (HW4 revision to SPEC.md)",
+      "revision_note": "Rare: 4 of 250 traces, all the same merchant (store id 1 passed where a store name is required). Reviewer: the agent should map the current merchant to the store name; the prompt gives the id but not the name."
+    },
+    {
+      "name": "unprofessional_style",
+      "status": "draft",
+      "count": 6,
+      "definition": "The reply uses markup or tone that reads as unprofessional: double asterisks, pipe tables, emoji, an inconsistent label/date layout, or an apologetic, gushing or falsely personal tone.",
+      "example_trace_ids": [
+        "07c842c26cd8a0bf03ff6f985d5fc336",
+        "6859196e302f509f4a87318c074c90fd",
+        "2622fa8de6e0ac7c45a215fc5049bed0",
+        "b8ab0b98d5e7ac225cf2872c6d7ecbc4",
+        "c4de09d9569488e337f32051f0bfff13",
+        "131bf25c233cbd43087604a174e88150"
+      ],
+      "close_negative_trace_ids": [
+        "633afacff8006038721468238086d8b5",
+        "4b007c286fc3e175cf3b6ccfb3f020f2",
+        "4cd5ee3add28bc2e303171a97a9e245c"
+      ],
+      "origin_annotation_ids": [
+        "ann-1789828675902-oqfyo",
+        "ann-1789829229264-k66f6",
+        "ann-1789830571369-p0ga8",
+        "ann-1789831887320-s5rjr",
+        "ann-1789833388828-mw2p9",
+        "ann-1789834101930-zkq3t"
+      ],
+      "boundary": "Length and repetition belong to verbose_reply; showing an internal policy ID belongs to internal_policy_id_shown.",
+      "evaluator_type": "code_check_plus_llm_judge",
+      "requirement_source": "RESP-6 (HW4 revision to SPEC.md); loosely RESP-5",
+      "revision_note": "Merged from formatting_noise and tone_off to stay within the 8-mode cap. One product change (a plain, professional style instruction in the prompt) would fix both. Earlier the reviewer had chosen to keep them separate; the cap and the merge rule reversed that."
     },
     {
       "name": "missing_data_not_flagged",
-      "definition": "The record has missing or inconsistent data and the reply does not say so.",
+      "definition": "The record itself shows missing or inconsistent data (a null date, or dates that contradict each other) and the reply does not say so.",
       "status": "draft",
-      "count": 3,
+      "count": 6,
       "example_trace_ids": [
         "8e2ead2415294386a029535c6fb4a7b9",
-        "099a5c2b895e99078abf81b489e78438",
-        "88adb69fd1cb6a0a0dd5436f8af71cd1"
+        "9bfb602e43fda8eb531395656361af65",
+        "83be30ceb8cbd1dc21eb11c28c28c535",
+        "95f3735f679f54d277994632fefb2da0",
+        "4fc6072a4edc7b60361f9efcc9bbb864",
+        "39ad4d264509f901fe5207aef70c1997"
       ],
       "close_negative_trace_ids": [
         "996433c65f56d76a1a3c03795732aafc",
         "ae6d7f2bc75d62245ca306aeb4af8d76",
         "1cc34674d7fe5f024dc1426df37b8e13",
-        "c4de09d9569488e337f32051f0bfff13"
+        "c4de09d9569488e337f32051f0bfff13",
+        "dc1f3ea0c7cd9b1a3126fd8362a2cf5c",
+        "9e5429468d8e6f2234bb70f1703c5387",
+        "748b706e644f54ce822f8fa08a02abb3",
+        "cd8cf404cd46d641f7972b0f40e3d34e",
+        "b347b11ff5d09a0636df1d102462915a"
       ],
       "origin_annotation_ids": [
         "ann-1789831096525-nr0o3",
@@ -168,37 +173,76 @@
       ],
       "boundary": "How the agent explains things belongs to other modes.",
       "evaluator_type": "llm_judge",
-      "requirement_source": "RESP-3",
-      "unconfirmed_positive_trace_ids": [
+      "requirement_source": "RESP-3 (clarified in HW4 with null and contradictory date examples)",
+      "removed_positive_trace_ids": [
         "099a5c2b895e99078abf81b489e78438",
         "88adb69fd1cb6a0a0dd5436f8af71cd1"
-      ]
+      ],
+      "revision_note": "Narrowed after Workshop review: the agent has no tool to look up a product by ID, so a store/product mismatch (order 8003, #51 and #23) is not visible from the record alone. Needs 2+ more positives from the batch 3 depth search. Then extended to contradictory dates (reviewer decision) and grown to 6 positives from the batch 3 depth search."
     },
     {
       "name": "persona_not_clarified",
-      "definition": "The caller sounds like they are acting in a different capacity than their session role, and the agent neither asks nor says which capacity it is serving.",
+      "definition": "The caller sounds like they are acting in a different capacity than their session role, and the agent takes a consequential action (such as issuing a refund) or answers in the wrong capacity without asking which capacity it is serving.",
       "status": "draft",
       "count": 3,
       "example_trace_ids": [
-        "d71b7a03b110c9d5e1ab2c1145fc9d61",
-        "8723cb477733a54ebb0ea931385688a7",
-        "b4e408c135ea3700110d3121fd6e5154"
+        "94ef36c32f814fa8471f851c3e44da20",
+        "a983b971f7a6496f7434392ef64c5be8",
+        "2ee0837b1917e44b756c2c05974cf578"
       ],
       "close_negative_trace_ids": [
         "b536da88a7c1693b664a64533c0e8ad9",
         "0677401a9300cc79d9b5069651f70426",
-        "e156d45073ec9314b65bf150edd789d9"
+        "e156d45073ec9314b65bf150edd789d9",
+        "64d81544c0fd298ed04b2ee0b20076f5",
+        "4052427482eff535e86a54b71dcb7bc9",
+        "7a65f606636a828f05cc00f3830925d8",
+        "e131f88180760a41e3dd3891394b8cec",
+        "f41f965d5a0feb5efb5f076c8a228798"
       ],
       "origin_annotation_ids": [
         "ann-1789831170066-v0qpk"
       ],
       "boundary": "A refusal that leaks information belongs to RESP-4.",
       "evaluator_type": "llm_judge",
-      "requirement_source": "SPEC Section 3 (roles); new requirement needed",
+      "requirement_source": "RESP-9 (HW4 revision to SPEC.md); SPEC Section 3 (roles and permissions)",
       "unconfirmed_positive_trace_ids": [
         "8723cb477733a54ebb0ea931385688a7",
         "b4e408c135ea3700110d3121fd6e5154"
-      ]
+      ],
+      "workshop_run_positive_ids": [
+        "14aef58ba22e3492b0d3581c2d40d3df"
+      ],
+      "recheck_trace_ids": [
+        "d71b7a03b110c9d5e1ab2c1145fc9d61",
+        "8723cb477733a54ebb0ea931385688a7",
+        "b4e408c135ea3700110d3121fd6e5154"
+      ],
+      "revision_note": "Reviewer rule: it counts when a consequential action is taken on a guess about the capacity, not for a lucky guess with no action. #24, #44, #46 and the Workshop run 14aef58b were confirmed under the older wording and must be re-checked against this rule."
+    },
+    {
+      "name": "reply_misses_the_ask",
+      "status": "draft",
+      "definition": "The reply does not directly answer the question asked, or leaves out information the person needs to act on it (for example the reason and time limit for a dispute, a plain yes on a cancellation, or a clear way to tell duplicate listings apart).",
+      "count": 7,
+      "example_trace_ids": [
+        "b390c2be8fa9ea16fb800518b500b666",
+        "303aa115ab04e758380a5f7c81b32f98",
+        "db47a50902a8c12df9fa69e55230fdf1",
+        "17282a6476bb6a7e1d643dd9afde8238",
+        "20d7a540cf309f7fb06e109761c7ed61",
+        "e80b46de3a824cc7f5ba08491890c3e2",
+        "33f789ed2513f8caa3003f495b0b082d"
+      ],
+      "close_negative_trace_ids": [
+        "a86029bfcc2ecf58cd390e3dc6508917",
+        "85cafdaab526c770bd2a2478d3efa69f"
+      ],
+      "origin_annotation_ids": [],
+      "boundary": "Extra or repeated wording belongs to verbose_reply; missing or inconsistent record data belongs to missing_data_not_flagged.",
+      "evaluator_type": "llm_judge",
+      "requirement_source": "RESP-8 (HW4 revision to SPEC.md); loosely RESP-5",
+      "revision_note": "Taxonomy revision: began as dispute_basis_not_explained (candidate from reviewer note on #71). In the final 15 batch, #92 and #94 showed the same underlying problem, so the mode was broadened rather than adding a 9th. One product change (answer the question asked and include what the person needs) corrects all three. Close negatives (proposed, unconfirmed): #28 and #38."
     }
   ]
 }

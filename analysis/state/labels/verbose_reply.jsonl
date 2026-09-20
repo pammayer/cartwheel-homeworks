@@ -1,0 +1,16 @@
+{"trace_id": "633afacff8006038721468238086d8b5", "mode": "verbose_reply", "label": 1, "evidence": "", "source": "human", "ts": "2026-09-20T16:28:01.732996+00:00"}
+{"trace_id": "07c842c26cd8a0bf03ff6f985d5fc336", "mode": "verbose_reply", "label": 1, "evidence": "", "source": "human", "ts": "2026-09-20T16:29:35.509838+00:00"}
+{"trace_id": "b57a05f1482c97884fc7546668aaeebd", "mode": "verbose_reply", "label": 1, "evidence": "", "source": "human", "ts": "2026-09-20T16:38:47.270408+00:00"}
+{"trace_id": "6859196e302f509f4a87318c074c90fd", "mode": "verbose_reply", "label": 1, "evidence": "", "source": "human", "ts": "2026-09-20T16:39:54.068375+00:00"}
+{"trace_id": "48c22f8507ba0b6a43e7182c60b11535", "mode": "verbose_reply", "label": 1, "evidence": "", "source": "human", "ts": "2026-09-20T16:40:22.705014+00:00"}
+{"trace_id": "131bf25c233cbd43087604a174e88150", "mode": "verbose_reply", "label": 0, "evidence": "", "source": "human", "ts": "2026-09-20T16:41:12.065614+00:00", "superseded_by": "2026-09-20T16:56:51.193855+00:00"}
+{"trace_id": "b4e408c135ea3700110d3121fd6e5154", "mode": "verbose_reply", "label": 1, "evidence": "", "source": "human", "ts": "2026-09-20T16:43:41.713476+00:00"}
+{"trace_id": "5d9ca2f509998a5d4e098131b0b2fde5", "mode": "verbose_reply", "label": 0, "evidence": "", "source": "human", "ts": "2026-09-20T16:48:17.624842+00:00", "superseded_by": "2026-09-20T16:56:51.203412+00:00"}
+{"trace_id": "95f3735f679f54d277994632fefb2da0", "mode": "verbose_reply", "label": 1, "evidence": "", "source": "human", "ts": "2026-09-20T16:48:30.687694+00:00"}
+{"trace_id": "9e5429468d8e6f2234bb70f1703c5387", "mode": "verbose_reply", "label": 0, "evidence": "", "source": "human", "ts": "2026-09-20T16:48:58.798258+00:00"}
+{"trace_id": "17282a6476bb6a7e1d643dd9afde8238", "mode": "verbose_reply", "label": 0, "evidence": "", "source": "human", "ts": "2026-09-20T16:49:33.688295+00:00"}
+{"trace_id": "e3e14a25b3d1fa48e4368e8550ef87bf", "mode": "verbose_reply", "label": 0, "evidence": "", "source": "human", "ts": "2026-09-20T16:49:55.198319+00:00"}
+{"trace_id": "f1fd371bcf7192481895f008db3cf046", "mode": "verbose_reply", "label": 0, "evidence": "", "source": "human", "ts": "2026-09-20T16:50:34.641178+00:00", "superseded_by": "2026-09-20T16:56:51.210419+00:00"}
+{"trace_id": "131bf25c233cbd43087604a174e88150", "mode": "verbose_reply", "label": 1, "evidence": "Reconciled with reviewer: for merchant and support sessions extra order data is acceptable, but filler and apologies still count as verbose.", "source": "human", "ts": "2026-09-20T16:56:51.193855+00:00"}
+{"trace_id": "5d9ca2f509998a5d4e098131b0b2fde5", "mode": "verbose_reply", "label": 1, "evidence": "Reconciled with reviewer: for merchant and support sessions extra order data is acceptable, but filler and apologies still count as verbose.", "source": "human", "ts": "2026-09-20T16:56:51.203412+00:00"}
+{"trace_id": "f1fd371bcf7192481895f008db3cf046", "mode": "verbose_reply", "label": 1, "evidence": "Reconciled with reviewer: for merchant and support sessions extra order data is acceptable, but filler and apologies still count as verbose.", "source": "human", "ts": "2026-09-20T16:56:51.210419+00:00"}
