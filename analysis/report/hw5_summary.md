@@ -68,8 +68,10 @@ and `verbose_reply`, which still need more human labels.
 - The judge is Claude Haiku 4.5 and the agent under review is Claude Opus, the
   same model family. That risks self-preference; it is unlikely to matter for a
   check this concrete, but it was not tested. The handout specifies gpt-4o-mini;
-  the reviewer chose Claude instead, which needed one line added to
-  `analysis/helpers/scale.py` (accept `ANTHROPIC_API_KEY`).
+  the reviewer chose Claude instead. The course helper only switches on for an
+  OpenAI or Gemini key, so `run_judges.py` enables it for an Anthropic key inside
+  its own process; `analysis/helpers/scale.py` is unchanged (editing it made an
+  offline helper test fail in the full suite).
 - The two skills were not installed. Their instructions were read from GitHub and
   followed.
 - Total judge cost was about $0.12 (two runs of 28 traces).

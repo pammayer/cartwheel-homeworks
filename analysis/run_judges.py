@@ -24,7 +24,18 @@ TRACE_EXPORT = REPO / "traces" / "support_traces.json"
 INPUTS_PATH = REPO / "analysis" / "state" / "hw5_trace_inputs.json"
 JUDGE_MODEL = "anthropic/claude-haiku-4-5-20251001"
 
-_CP1252 = None
+
+def _enable_claude_backend() -> None:
+    """Let the course's DocETL runner use an Anthropic key.
+
+    The provided helper only switches on when it finds an OpenAI or Gemini key.
+    Patching it here, for this process only, avoids editing shared course code
+    (an edit there made an offline helper test fail in the full suite).
+    """
+    from analysis.helpers import scale
+
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        scale._backend = lambda: "docetl"
 
 
 def _fix_text(text: str) -> str:
@@ -97,6 +108,7 @@ def run_development(mode: str = MODE, prompt_path: str | Path = "analysis/prompt
     from analysis.helpers import judge_alignment, register_judge, run_judge
 
     load_env()
+    _enable_claude_backend()
     os.environ.setdefault("CARTWHEEL_JUDGE_TRACE_SOURCE", str(INPUTS_PATH))
     record = register_judge(
         mode=mode,
@@ -120,6 +132,7 @@ def run_test(judge_id: str) -> dict:
     from analysis.helpers import freeze_judge, judge_alignment, run_judge
 
     load_env()
+    _enable_claude_backend()
     os.environ.setdefault("CARTWHEEL_JUDGE_TRACE_SOURCE", str(INPUTS_PATH))
     freeze_judge(judge_id)  # one-way: unlocks the test split
     run_judge(judge_id, split="test", batch_size=10)
