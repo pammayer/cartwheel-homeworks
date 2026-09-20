@@ -1,0 +1,10 @@
+{
+  "method": "regex cw-<word> in assistant replies",
+  "split": "test",
+  "tp": 15,
+  "fn": 0,
+  "tn": 13,
+  "fp": 0,
+  "tpr": 1.0,
+  "tnr": 1.0
+}

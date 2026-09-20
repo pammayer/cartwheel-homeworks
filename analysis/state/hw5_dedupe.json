@@ -1,0 +1,152 @@
+{
+ "note": "Near-duplicate handling for HW5: the 100 HW4 traces cover 70 underlying cases (same order or product id repeated across scenario variants). One record per case was kept by a seeded random draw (seed 7). Conversations without an order or product id are each their own case.",
+ "kept_trace_ids": [
+  "02a6435a6ff4cf8518060fad632da402",
+  "131bf25c233cbd43087604a174e88150",
+  "3bdbaae1db8f427c798b5f2e8b9ed4b0",
+  "3f0b1eae59205bd5460afdc318139067",
+  "9a231dfb86c9da3683f61f846f88b5c2",
+  "abed00ec5700865b093b54a799f3aec7",
+  "c3c89ac9b67eff02f6802db006d42353",
+  "cbcf765326b9bc88a2c1b657cdeaf746",
+  "e131f88180760a41e3dd3891394b8cec",
+  "e28a1d7bdf018773410e82f2faf1f621",
+  "ebe170e7f88de5a6bc34d5561317c7eb",
+  "07c842c26cd8a0bf03ff6f985d5fc336",
+  "36ed333695bbd05e703a542b258ac0d0",
+  "748b706e644f54ce822f8fa08a02abb3",
+  "066674bcd5166276b1fc5cd3e245b454",
+  "6859196e302f509f4a87318c074c90fd",
+  "b4e408c135ea3700110d3121fd6e5154",
+  "c2a1cc4fa4974dbbbac5cad616bd7211",
+  "33f789ed2513f8caa3003f495b0b082d",
+  "5a69a73ac13a285013272a967c633c30",
+  "4c015dda22edc3fd35d29def509f462e",
+  "146f4874338007c5615357b71ed01113",
+  "b536da88a7c1693b664a64533c0e8ad9",
+  "188790aa9a6140d4945c2d14e5d5fe3b",
+  "e156d45073ec9314b65bf150edd789d9",
+  "cdebb350350c00313150815047bb7766",
+  "a3780b7e0c2c59cb33eada8dea87fe31",
+  "f1fd371bcf7192481895f008db3cf046",
+  "f8019a8391508f00ae490cfa84d3a3e0",
+  "8becf774b4d6681afeefe41bb40d79c6",
+  "66494e46f476ca6f2787e6fc1d84a524",
+  "1cc34674d7fe5f024dc1426df37b8e13",
+  "b390c2be8fa9ea16fb800518b500b666",
+  "a983b971f7a6496f7434392ef64c5be8",
+  "a86029bfcc2ecf58cd390e3dc6508917",
+  "d71b7a03b110c9d5e1ab2c1145fc9d61",
+  "17282a6476bb6a7e1d643dd9afde8238",
+  "94ef36c32f814fa8471f851c3e44da20",
+  "ae6d7f2bc75d62245ca306aeb4af8d76",
+  "c93199d2a6ad9961bd5222cef05f62e6",
+  "3fa9299997d50f213f07f9d39cb3bbb2",
+  "6c4abe2bd10f9fb3eacc461380513041",
+  "db47a50902a8c12df9fa69e55230fdf1",
+  "307a836d9418e31520e78ef9ce88b2fe",
+  "751d591785a03436e8fed5202f452774",
+  "00aad373bbaa530a83a7a256dc18c9e4",
+  "b8ab0b98d5e7ac225cf2872c6d7ecbc4",
+  "bea2297fc5df0ded189eea9019548e5f",
+  "20d7a540cf309f7fb06e109761c7ed61",
+  "02bc53a4276fc89cb9f3f6cd56ce040f",
+  "64d81544c0fd298ed04b2ee0b20076f5",
+  "b584c757802f46379cf3094e0538ff10",
+  "8fd3d03ef74e73e242d5c127139cd4e6",
+  "8723cb477733a54ebb0ea931385688a7",
+  "5d9ca2f509998a5d4e098131b0b2fde5",
+  "48c22f8507ba0b6a43e7182c60b11535",
+  "996433c65f56d76a1a3c03795732aafc",
+  "cd8cf404cd46d641f7972b0f40e3d34e",
+  "0677401a9300cc79d9b5069651f70426",
+  "c4de09d9569488e337f32051f0bfff13",
+  "95f3735f679f54d277994632fefb2da0",
+  "099a5c2b895e99078abf81b489e78438",
+  "b2d117cc1354c0a1b9bef230f2853105",
+  "303aa115ab04e758380a5f7c81b32f98",
+  "85cafdaab526c770bd2a2478d3efa69f",
+  "e18e8f1c4d529287c1cb12c25585ec7b",
+  "2f2006ecdfb6a07eba43115e56d1ae85",
+  "4171307f07ef4dbc0b27d5a6a37ad8e0",
+  "88ccacd8e7ee7961cf16971bdf24c530",
+  "cf5aa1aab59b46fe3f157b7759971cf7"
+ ],
+ "duplicate_groups": {
+  "('product', 3)": [
+   "633afacff8006038721468238086d8b5",
+   "4cd5ee3add28bc2e303171a97a9e245c",
+   "c4fba194fcdeb9ae00f06e766dcebdaa",
+   "4171307f07ef4dbc0b27d5a6a37ad8e0",
+   "e3e14a25b3d1fa48e4368e8550ef87bf"
+  ],
+  "('product', 2)": [
+   "4b007c286fc3e175cf3b6ccfb3f020f2",
+   "4052427482eff535e86a54b71dcb7bc9",
+   "a35588e19cc0a51dd071cedd46c5954c",
+   "2f2006ecdfb6a07eba43115e56d1ae85",
+   "e80b46de3a824cc7f5ba08491890c3e2"
+  ],
+  "('product', 4)": [
+   "88ccacd8e7ee7961cf16971bdf24c530",
+   "564129d5827c5fb8758135be58b8a484",
+   "8fac5880ff66217f3f2a3052ef471da3"
+  ],
+  "('order', 566)": [
+   "7ba7f889464451da4976ee4cccdebe7a",
+   "b584c757802f46379cf3094e0538ff10"
+  ],
+  "('order', 8001)": [
+   "c4de09d9569488e337f32051f0bfff13",
+   "4fc6072a4edc7b60361f9efcc9bbb864",
+   "39ad4d264509f901fe5207aef70c1997",
+   "9e5429468d8e6f2234bb70f1703c5387"
+  ],
+  "('order', 89)": [
+   "b2d117cc1354c0a1b9bef230f2853105",
+   "2cdf3aa4e362b4a9f7400f4f41291cbc",
+   "f3c82b60d1b5df29e607c1f3397c631d"
+  ],
+  "('order', 8003)": [
+   "88adb69fd1cb6a0a0dd5436f8af71cd1",
+   "099a5c2b895e99078abf81b489e78438",
+   "b347b11ff5d09a0636df1d102462915a",
+   "7a65f606636a828f05cc00f3830925d8"
+  ],
+  "('order', 345)": [
+   "d71b7a03b110c9d5e1ab2c1145fc9d61",
+   "2622fa8de6e0ac7c45a215fc5049bed0"
+  ],
+  "('order', 1878)": [
+   "b57a05f1482c97884fc7546668aaeebd",
+   "e156d45073ec9314b65bf150edd789d9"
+  ],
+  "('order', 944)": [
+   "85cafdaab526c770bd2a2478d3efa69f",
+   "5dffe44ee07ce8ada1d52634e36013b6"
+  ],
+  "('order', 4127)": [
+   "6c4abe2bd10f9fb3eacc461380513041",
+   "5518644d1d8d79ea7112452ee176653c"
+  ],
+  "('order', 8002)": [
+   "8e2ead2415294386a029535c6fb4a7b9",
+   "9bfb602e43fda8eb531395656361af65",
+   "dc1f3ea0c7cd9b1a3126fd8362a2cf5c",
+   "83be30ceb8cbd1dc21eb11c28c28c535",
+   "95f3735f679f54d277994632fefb2da0"
+  ],
+  "('order', 1863)": [
+   "188790aa9a6140d4945c2d14e5d5fe3b",
+   "2ee0837b1917e44b756c2c05974cf578"
+  ],
+  "('order', 554)": [
+   "64d81544c0fd298ed04b2ee0b20076f5",
+   "f41f965d5a0feb5efb5f076c8a228798"
+  ],
+  "('order', 1663)": [
+   "66997176599e3ae1df01ec2c42bee348",
+   "33f789ed2513f8caa3003f495b0b082d"
+  ]
+ }
+}

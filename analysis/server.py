@@ -185,6 +185,10 @@ class ReviewHandler(BaseHTTPRequestHandler):
             self._send_json(_live_labels())
             return
 
+        if path == "/api/judge":
+            self._send_json(_judge_view())
+            return
+
         if path == "/api/audit":
             self._send_json(_read_json(STATE_DIR / "audit_sample.json", {"cells": []}))
             return
@@ -345,6 +349,51 @@ def _write_label(trace_id: str, mode: str, label: Any, evidence: str) -> dict[st
     tmp.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     tmp.replace(path)
     return {"changed": True}
+
+
+def _judge_view() -> dict[str, Any]:
+    """Judge verdicts and critiques next to the reviewer's HW5 labels (read-only).
+
+    Test-split predictions are withheld until the judge is frozen, so the
+    interface can never show them while the prompt is still being chosen.
+    """
+    splits = _read_json(STATE_DIR / "splits.json", {})
+    judges: list[dict[str, Any]] = []
+    human: dict[str, dict[str, int]] = {}
+    jdir = STATE_DIR / "judges"
+    if jdir.exists():
+        for path in sorted(jdir.glob("*.json")):
+            if path.name.startswith("_"):
+                continue
+            judge = _read_json(path, None)
+            if not isinstance(judge, dict) or "prompt_hash" not in judge:
+                continue
+            mode = judge.get("mode")
+            frozen = judge.get("status") == "frozen"
+            split = splits.get(mode, {}) if isinstance(splits.get(mode), dict) else {}
+            split_of = {tid: "dev" for tid in split.get("dev", [])}
+            if frozen:
+                split_of.update({tid: "test" for tid in split.get("test", [])})
+            preds = (judge.get("predictions") or {}).get(judge["prompt_hash"], {})
+            crits = (judge.get("critiques") or {}).get(judge["prompt_hash"], {})
+            pass_positive = judge.get("label_convention") == "pass_positive"
+            results = {}
+            for tid, value in preds.items():
+                if tid not in split_of:
+                    continue
+                is_pass = int(value) == 1 if pass_positive else int(value) == 0
+                results[tid] = {"verdict": "Pass" if is_pass else "Fail",
+                                "critique": crits.get(tid, ""), "split": split_of[tid]}
+            judges.append({"judge_id": judge.get("judge_id"), "mode": mode,
+                           "version": judge.get("version"), "status": judge.get("status"),
+                           "results": results})
+            if mode and mode not in human:
+                human[mode] = {
+                    row["trace_id"]: row["label"]
+                    for row in _read_label_rows(STATE_DIR / "hw5_labels" / f"{mode}.jsonl")
+                    if not row.get("superseded_by")
+                }
+    return {"judges": judges, "human": human}
 
 
 def _count(data: Any) -> int:

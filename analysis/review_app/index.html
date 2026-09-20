@@ -139,6 +139,8 @@
   .tag-hand { background: #ffedd5; color: #9a3412; border: 1px solid #fb923c; }
   .tag-rule { background: #f1f5f9; color: #475569; border: 1px dashed #94a3b8; }
   .judge-row.needs-hand { background: #fff7ed; border-left: 3px solid #fb923c; padding-left: 6px; }
+  .judge-verdict { margin-top: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+  .judge-verdict.disagree { border-color: #fb923c; background: #fff7ed; }
   .rule-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .accept-rule { padding: 1px 8px; font-size: 11px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
 
@@ -178,6 +180,7 @@
     <button id="prev">&larr;</button>
     <span id="counter">0 / 0</span>
     <button id="next">&rarr;</button>
+    <label class="hint" style="margin-left:8px"><input type="checkbox" id="only-disagree" /> judge disagreements only</label>
   </div>
   <div class="spacer"></div>
   <div class="stats" id="stats"></div>
@@ -196,7 +199,7 @@ const api = {
 };
 
 const state = {
-  samples: [], annotations: [], suggestions: [], patterns: {}, graph: {nodes: [], clusters: []}, scenarios: {}, labels: {}, audit: new Set(),
+  samples: [], annotations: [], suggestions: [], patterns: {}, graph: {nodes: [], clusters: []}, scenarios: {}, labels: {}, audit: new Set(), judge: {judges: [], human: {}}, onlyDisagree: false,
   view: 'trace', idx: 0, pendingQuote: null,
 };
 
@@ -265,6 +268,7 @@ async function load() {
     api.get('/api/patterns'), api.get('/api/graph'), api.get('/api/scenarios'), api.get('/api/labels'),
   ]);
   state.labels = labels && typeof labels === 'object' ? labels : {};
+  try { state.judge = await api.get('/api/judge'); } catch (e) {}
   try { const au = await api.get('/api/audit'); state.audit = new Set(((au && au.cells) || []).map(c => `${c.trace_id}|${c.mode}`)); } catch (e) {}
   state.samples = (Array.isArray(samples) ? samples : []).map(deepFixText);
   state.annotations = asAnnotationList(annotations);
@@ -288,8 +292,8 @@ function renderTopbar() {
   document.getElementById('trace-nav').style.visibility = state.view === 'trace' ? 'visible' : 'hidden';
   const total = state.samples.length;
   document.getElementById('counter').textContent = total ? `${state.idx + 1} / ${total}` : '0 / 0';
-  document.getElementById('prev').disabled = state.idx <= 0;
-  document.getElementById('next').disabled = state.idx >= total - 1;
+  document.getElementById('prev').disabled = stepTrace(-1) < 0;
+  document.getElementById('next').disabled = stepTrace(1) < 0;
   const annotatedTraces = new Set(state.annotations.filter(a => !a.mode).map(a => a.trace_id)).size;
   const need = normalizePatterns(state.patterns).length;
   const handLeft = state.samples.reduce((n, s) => n + handCount(s), 0);
@@ -572,6 +576,31 @@ function judgedCount(traceId) {
 
 function isAudit(mode, traceId) { return state.audit.has(`${traceId}|${mode}`); }
 
+// ---- judge verdict beside the human label (HW5) ----
+
+function judgeInfo(traceId) {
+  const out = [];
+  (state.judge.judges || []).forEach(j => {
+    const r = j.results && j.results[traceId];
+    if (!r) return;
+    const human = (state.judge.human[j.mode] || {})[traceId];
+    const humanVerdict = human === 1 ? 'Pass' : human === 0 ? 'Fail' : null;
+    out.push({judge_id: j.judge_id, mode: j.mode, status: j.status, split: r.split, verdict: r.verdict,
+              critique: r.critique, human: humanVerdict, agree: humanVerdict === null ? null : humanVerdict === r.verdict});
+  });
+  return out;
+}
+
+function isDisagreement(traceId) { return judgeInfo(traceId).some(x => x.agree === false); }
+
+function stepTrace(dir) {
+  const total = state.samples.length;
+  for (let i = state.idx + dir; i >= 0 && i < total; i += dir) {
+    if (!state.onlyDisagree || isDisagreement(state.samples[i].trace_id)) return i;
+  }
+  return -1;
+}
+
 function handCount(sample) {
   return normalizePatterns(state.patterns).filter(m => needsHand(m.name, sample) && isAudit(m.name, sample.trace_id)).length;
 }
@@ -639,7 +668,14 @@ function renderMargin() {
         `<div class="meta"><span></span><button class="del" data-id="${escape(a.id)}">delete</button></div></div>`).join('')
     : `<div class="hint">No notes on this trace yet.</div>`;
 
-  el.innerHTML = noteCard + judgeCard + `<div class="card"><b style="font-size:12px">Notes on this trace</b><div style="margin-top:8px">${notesHtml}</div></div>`;
+  const jinfo = judgeInfo(tid);
+  const judgeBox = jinfo.length ? `<div class="card"><b style="font-size:12px">3. LLM judge (${escape(jinfo[0].judge_id)})</b>` +
+    jinfo.map(x => `<div class="judge-verdict ${x.agree === false ? 'disagree' : ''}">` +
+      `<div><b>Judge:</b> ${x.verdict} &nbsp; <b>You:</b> ${x.human || 'not labeled'} &nbsp; ` +
+      `<span class="tag ${x.agree === false ? 'tag-hand' : 'tag-rule'}">${x.agree === null ? 'no human label' : x.agree ? 'agree' : 'DISAGREE'}</span> ` +
+      `<span class="hint">(${escape(x.split)} split)</span></div>` +
+      `<div class="hint" style="margin-top:4px; white-space:pre-wrap">${escape(x.critique || '')}</div></div>`).join('') + `</div>` : '';
+  el.innerHTML = noteCard + judgeCard + judgeBox + `<div class="card"><b style="font-size:12px">Notes on this trace</b><div style="margin-top:8px">${notesHtml}</div></div>`;
 
   const quoteText = state.pendingQuote ? state.pendingQuote.text : null;
   document.getElementById('save-note').addEventListener('click', () => saveAnnotation('', document.getElementById('note-text').value, null, quoteText));
@@ -868,8 +904,16 @@ document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click
   if (state.view === 'progress') { try { state.labels = await api.get('/api/labels'); } catch (e) {} }
   renderAll();
 }));
-document.getElementById('prev').addEventListener('click', () => { if (state.idx > 0) { state.idx--; state.pendingQuote = null; renderAll(); } });
-document.getElementById('next').addEventListener('click', () => { if (state.idx < state.samples.length - 1) { state.idx++; state.pendingQuote = null; renderAll(); } });
+document.getElementById('only-disagree').addEventListener('change', e => {
+  state.onlyDisagree = e.target.checked;
+  if (state.onlyDisagree) {
+    const anyDis = state.samples.some(s => isDisagreement(s.trace_id));
+    if (!anyDis) alert('The judge has no disagreements with your labels on the traces it has judged.');
+    else if (!isDisagreement(state.samples[state.idx].trace_id)) { const i = stepTrace(1) >= 0 ? stepTrace(1) : stepTrace(-1); if (i >= 0) { state.idx = i; renderAll(); } }
+  }
+});
+document.getElementById('prev').addEventListener('click', () => { const i = stepTrace(-1); if (i >= 0) { state.idx = i; state.pendingQuote = null; renderAll(); } });
+document.getElementById('next').addEventListener('click', () => { const i = stepTrace(1); if (i >= 0) { state.idx = i; state.pendingQuote = null; renderAll(); } });
 
 async function poll() {
   try {
