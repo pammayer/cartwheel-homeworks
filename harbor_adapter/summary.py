@@ -17,6 +17,25 @@ def _case_id(task_name: str, known_ids: set[str]) -> str | None:
     return max(matches, key=len) if matches else None
 
 
+def _load_trial_results(job_dir: Path, result: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return this job's per-trial result dicts, in run order.
+
+    harbor 0.23.0's job-level result.json carries only aggregate stats, not
+    the "trial_results" array this module was written against; each trial's
+    own result.json under job_dir/<trial>/ has the same task_name /
+    verifier_result / exception_info shape, so fall back to reading those,
+    sorted by start time to preserve run order (needed for the Part E trial
+    order, since directory names are random suffixes, not run order).
+    A mocked job-level "trial_results" array (used by this repo's own tests)
+    is tried first so both shapes work.
+    """
+    if "trial_results" in result:
+        return result["trial_results"]
+    trials = [json.loads(path.read_text()) for path in job_dir.glob("*/result.json")]
+    trials.sort(key=lambda trial: trial.get("started_at") or "")
+    return trials
+
+
 def _reward(trial: dict[str, Any]) -> float | None:
     verifier = trial.get("verifier_result")
     if not isinstance(verifier, dict):
@@ -47,9 +66,10 @@ def summarize_job(
     if not result_path.exists():
         raise FileNotFoundError(f"Harbor result not found: {result_path}")
     result = json.loads(result_path.read_text())
+    trial_results = _load_trial_results(job_dir, result)
     trials: dict[str, list[dict[str, Any]]] = defaultdict(list)
     unknown: list[str] = []
-    for trial in result.get("trial_results", []):
+    for trial in trial_results:
         case_id = _case_id(str(trial.get("task_name", "")), set(by_id))
         if case_id is None:
             unknown.append(str(trial.get("task_name", "")))
