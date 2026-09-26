@@ -1,0 +1,18 @@
+{
+  "pull_request": "https://github.com/pammayer/cartwheel-homeworks/pull/1",
+  "case_id": "e-009",
+  "mode": "persona_not_clarified",
+  "first_run": {
+    "url": "https://github.com/pammayer/cartwheel-homeworks/actions/runs/36264926069",
+    "commit": "8744bf4",
+    "change": "Temporary prompt instruction (marked HW6-TEMP-REGRESSION) telling the agent to skip clarifying questions and act immediately on a refund or cancellation once eligibility is confirmed.",
+    "result": "e-009 passed 4 of 5 trials (pass@1=0.800, pass^5=0.000). CI decision: block. All other regression cases (e-002, e-003, e-004, e-007, e-008, e-010, e-011, e-012) still passed 5 of 5 despite the same instruction being present; only e-009 actually flipped."
+  },
+  "second_run": {
+    "url": "https://github.com/pammayer/cartwheel-homeworks/actions/runs/36266056922",
+    "commit": "796dc0b",
+    "change": "git revert of the temporary instruction; agent/agent.py restored to its pre-regression text exactly.",
+    "result": "e-009 passed 5 of 5 trials (pass@1=1.000, pass^5=1.000). CI decision: pass. All 9 regression cases passed 5 of 5; the 3 capability cases stayed non-blocking (e-005 varied 1/5 -> 2/5, ordinary run-to-run noise for a case that was already known-unreliable)."
+  },
+  "explanation": "The instruction was added to break persona_not_clarified (the agent should ask which capacity a merchant/support caller means before acting on a refund or cancellation, instead of guessing). It was not a blunt-force regression: 8 of the 9 targeted-or-adjacent regression cases held up at 5/5 despite the instruction being present, and only e-009 actually failed a trial (4/5). That is itself informative: the agent's underlying behavior here is fairly robust to this specific instruction, and CI only needs one real failure in one case to correctly block the PR, which is what happened. After reverting the instruction (a single git revert of the exact added lines, verified with a diff), e-009 returned to 5/5 and the gate passed, showing the original behavior came back rather than the case being inherently flaky."
+}
