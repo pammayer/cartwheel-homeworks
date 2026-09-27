@@ -13,6 +13,13 @@ jobs:
     # from a GitHub-hosted runner — this needs a self-hosted runner registered
     # to this repo and running on that machine.
     runs-on: self-hosted
+    # The self-hosted runner's service account (NT AUTHORITY\NETWORK SERVICE)
+    # hits Windows' default PowerShell execution policy (Restricted), which
+    # blocks every `run:` step. Using bash (already present via Git for
+    # Windows) sidesteps it without touching a system-wide security setting.
+    defaults:
+      run:
+        shell: bash
     env:
       PYTHONPATH: ${{ github.workspace }}
       PYTHONIOENCODING: utf-8
