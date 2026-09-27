@@ -1,0 +1,44 @@
+name: monitor
+
+on:
+  schedule:
+    # Daily. Time of day is arbitrary; adjust if a different window is better.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    name: monitor last 24 hours
+    # Langfuse lives at localhost:3000 on the developer's machine, unreachable
+    # from a GitHub-hosted runner — this needs a self-hosted runner registered
+    # to this repo and running on that machine.
+    runs-on: self-hosted
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONIOENCODING: utf-8
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_HOST: ${{ vars.LANGFUSE_HOST }}
+      # The frozen judge's provider key (anthropic/claude-haiku-4-5-20251001),
+      # not the Cartwheel agent's — this job only reads existing traces, it
+      # never runs the agent.
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+
+      - name: Run the monitor over the last 24 hours
+        run: uv run python -m monitoring.run --last-hours 24
+
+      - name: Upload monitoring output as a workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-output
+          path: |
+            monitoring/history.jsonl
+            monitoring/prevalence.svg
+          if-no-files-found: warn
