@@ -15,11 +15,15 @@ jobs:
     runs-on: self-hosted
     # The self-hosted runner's service account (NT AUTHORITY\NETWORK SERVICE)
     # hits Windows' default PowerShell execution policy (Restricted), which
-    # blocks every `run:` step. Using bash (already present via Git for
-    # Windows) sidesteps it without touching a system-wide security setting.
+    # blocks every `run:` step. Using bash (Git for Windows, already present)
+    # sidesteps it without touching a system-wide security setting. Must be
+    # the explicit path, not the `bash` alias — under this service account's
+    # PATH, plain `bash` resolves to Windows' own WSL stub
+    # (C:\Windows\System32\bash.exe) ahead of Git's, and WSL has no
+    # distribution installed.
     defaults:
       run:
-        shell: bash
+        shell: 'C:\Program Files\Git\bin\bash.exe -e {0}'
     env:
       PYTHONPATH: ${{ github.workspace }}
       PYTHONIOENCODING: utf-8
