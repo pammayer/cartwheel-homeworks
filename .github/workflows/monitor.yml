@@ -13,17 +13,6 @@ jobs:
     # from a GitHub-hosted runner — this needs a self-hosted runner registered
     # to this repo and running on that machine.
     runs-on: self-hosted
-    # The self-hosted runner's service account (NT AUTHORITY\NETWORK SERVICE)
-    # hits Windows' default PowerShell execution policy (Restricted), which
-    # blocks every `run:` step. Using bash (Git for Windows, already present)
-    # sidesteps it without touching a system-wide security setting. Must be
-    # the explicit path, not the `bash` alias — under this service account's
-    # PATH, plain `bash` resolves to Windows' own WSL stub
-    # (C:\Windows\System32\bash.exe) ahead of Git's, and WSL has no
-    # distribution installed.
-    defaults:
-      run:
-        shell: 'C:\Program Files\Git\bin\bash.exe -e {0}'
     env:
       PYTHONPATH: ${{ github.workspace }}
       PYTHONIOENCODING: utf-8
@@ -39,13 +28,13 @@ jobs:
         with:
           lfs: true
       # astral-sh/setup-uv@v5's Node wrapper hits a known upstream libuv bug
-      # (nodejs/node#56645) on exit under this runner's Windows service
-      # account — uv itself installs fine, then the Node process crashes.
-      # The shell installer sidesteps Node entirely.
+      # (nodejs/node#56645) on exit under this runner's service account —
+      # uv itself installs fine, then the Node process crashes. uv's own
+      # PowerShell installer avoids Node entirely.
       - name: Install uv
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          irm https://astral.sh/uv/install.ps1 | iex
+          "$env:USERPROFILE\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
       - run: uv sync
 
       - name: Run the monitor over the last 24 hours
