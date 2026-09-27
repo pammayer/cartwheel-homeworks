@@ -32,9 +32,16 @@ jobs:
       # uv itself installs fine, then the Node process crashes. uv's own
       # PowerShell installer avoids Node entirely.
       - name: Install uv
+        # uv's default Windows install directory is inconsistent across
+        # versions/environments (astral-sh/uv#10014) — force a known path
+        # with UV_INSTALL_DIR instead of guessing where it landed.
         run: |
+          $env:UV_INSTALL_DIR = "C:\uv-bin"
           irm https://astral.sh/uv/install.ps1 | iex
-          "$env:USERPROFILE\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+          # Windows PowerShell 5.1's -Encoding utf8 still writes a BOM (true
+          # BOM-less UTF-8 needs utf8NoBOM, added in PS7+), which GITHUB_PATH
+          # doesn't parse correctly. .NET's UTF8Encoding($false) guarantees none.
+          [System.IO.File]::AppendAllText($env:GITHUB_PATH, "C:\uv-bin`n", [System.Text.UTF8Encoding]::new($false))
       - run: uv sync
 
       - name: Run the monitor over the last 24 hours
